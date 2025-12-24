@@ -180,6 +180,21 @@ function App() {
   </svg>
 </button>
                   </div>
+                  {/* 1. Change Topic Button (Swap Icon) */}
+<button className="card-btn" onClick={() => alert("Change topic logic needs to be connected to DB!")} title="Change Topic">
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+  </svg>
+</button>
+
+{/* 2. Refresh Numbers Button (Rotate Icon) */}
+<button className="card-btn" onClick={() => refreshCard(index)} title="New Question">
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <path d="M23 4v6h-6"/>
+    <path d="M1 20v-6h6"/>
+    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+  </svg>
+</button>
                   {/* Reuse refresh icon for single card refresh */}
                   <button className="card-btn" onClick={() => refreshCard(index)} title="New Question">
                     <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
