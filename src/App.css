@@ -48,7 +48,7 @@ header {
 
 /* --- MAIN LAYOUT --- */
 main {
-  max-width: 1300px; /* Increased width */
+  max-width: 1300px;
   margin: 0 auto;
   padding: 40px 20px;
   display: flex;
@@ -81,11 +81,11 @@ main {
   background: white; border-radius: 12px; box-shadow: var(--shadow);
   display: flex; flex-direction: column; min-height: 300px;
   transition: transform 0.2s;
-  overflow: hidden; /* Keeps buttons inside rounded corners */
+  overflow: hidden; 
 }
 .question-card:hover { transform: translateY(-3px); }
 
-/* --- CARD HEADER (BUTTONS FIX) --- */
+/* --- CARD HEADER --- */
 .card-header {
   padding: 10px 15px; border-bottom: 1px solid #eee;
   display: flex; align-items: center; justify-content: space-between;
@@ -105,17 +105,13 @@ main {
 }
 
 /* Action Buttons Container */
-.card-actions { 
-  display: flex; align-items: center; gap: 5px; 
-}
+.card-actions { display: flex; align-items: center; gap: 5px; }
 
-/* Zoom Controls Group */
 .zoom-controls {
   display: flex; gap: 2px; margin-right: 8px; padding-right: 8px;
   border-right: 1px solid #ddd;
 }
 
-/* The actual small buttons */
 .zoom-btn, .card-btn {
   width: 28px; height: 28px;
   display: flex; align-items: center; justify-content: center;
@@ -145,7 +141,7 @@ main {
 .answer-overlay.visible { opacity: 1; pointer-events: auto; }
 .answer-overlay-text { font-size: 1.8rem; font-weight: bold; color: var(--accent-2); }
 
-/* --- CARD FOOTER --- */
+/* --- CARD FOOTER (TEXT BUTTONS UPDATE) --- */
 .card-footer {
   padding: 12px 15px; border-top: 1px solid #eee;
   display: flex; align-items: center; justify-content: space-between;
@@ -158,6 +154,33 @@ main {
 }
 .reveal-btn:hover { background: var(--text); color: white; border-color: var(--text); }
 
+/* Text Rating Buttons */
+.perf-buttons { display: flex; gap: 6px; }
+
+.perf-btn {
+  padding: 6px 8px; /* Compact padding for text */
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-weight: 700; /* Bold text */
+  font-size: 0.7rem; /* Smaller text size */
+  cursor: pointer;
+  color: #7f8c8d;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  opacity: 0.7;
+}
+
+.perf-btn:hover { background: #f5f5f5; border-color: #999; color: #555; opacity: 1; }
+
+.perf-btn.active { opacity: 1; background: white; border-width: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+/* Specific Text Colors for Active State */
+.perf-btn.btn-100.active  { color: #27ae60; border-color: #27ae60; } /* 100% */
+.perf-btn.btn-most.active { color: #3498db; border-color: #3498db; } /* MOST */
+.perf-btn.btn-some.active { color: #e67e22; border-color: #e67e22; } /* SOME */
+.perf-btn.btn-nope.active { color: #c0392b; border-color: #c0392b; } /* NOPE! */
+
 /* Media Queries */
 @media (max-width: 1000px) {
   .questions-grid { grid-template-columns: repeat(2, 1fr); }
@@ -165,46 +188,3 @@ main {
 @media (max-width: 600px) {
   .questions-grid { grid-template-columns: 1fr; }
 }
-
-/* --- Performance Rating Buttons --- */
-.perf-buttons { display: flex; gap: 8px; }
-
-/* Base style to match reveal-btn */
-.perf-btn {
-  padding: 6px 12px;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  color: #7f8c8d; /* Neutral gray initially */
-  font-size: 1.1rem; /* Slightly larger for icons */
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
-  opacity: 0.7;
-}
-
-/* Hover state */
-.perf-btn:hover {
-   background: #f5f5f5;
-   border-color: #999;
-   color: #555;
-   opacity: 1;
-}
-
-/* Active States - Specific Colors & Thicker Border */
-.perf-btn.active {
-  opacity: 1;
-  background: white;
-  border-width: 2px; /* Make it pop */
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-/* Specific colors for active state */
-.perf-btn.btn-tick.active { color: #27ae60; border-color: #27ae60; } /* Green Tick */
-.perf-btn.btn-up.active   { color: #3498db; border-color: #3498db; } /* Blue Thumbs Up */
-.perf-btn.btn-down.active { color: #e67e22; border-color: #e67e22; } /* Orange Thumbs Down */
-.perf-btn.btn-cross.active{ color: #c0392b; border-color: #c0392b; } /* Red Cross */
-
-/* Ensure the checkmark badge in header matches */
-.rated-badge { color: #27ae60; }
