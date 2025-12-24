@@ -319,3 +319,102 @@ main {
   box-shadow: 0 4px 10px rgba(44, 62, 80, 0.3);
 }
 .btn-confirm:hover { background: #34495e; transform: translateY(-1px); }
+
+/* --- HOME SCREEN STYLES --- */
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 85vh; /* Center vertically */
+  text-align: center;
+}
+
+.home-header {
+  margin-bottom: 50px;
+}
+
+/* The "Random R" -> Now a Logo Icon */
+.logo-large {
+  width: 80px; 
+  height: 80px;
+  background: var(--accent-1); /* Navy Blue */
+  color: white;
+  font-size: 3rem; 
+  font-weight: 800;
+  border-radius: 20px; /* Rounded corners */
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  margin: 0 auto 20px auto; /* Center it horizontally */
+  box-shadow: 0 10px 20px rgba(44, 62, 80, 0.3);
+}
+
+.home-header h1 {
+  font-size: 2.5rem;
+  color: var(--accent-1);
+  margin: 0;
+  letter-spacing: -1px;
+}
+
+.home-header p {
+  color: #7f8c8d;
+  font-size: 1.2rem;
+  margin-top: 10px;
+}
+
+/* Home Screen Buttons (Cards) */
+.home-actions {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.big-btn {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 30px;
+  width: 320px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.big-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+  border-color: var(--accent-2); /* Blue border on hover */
+}
+
+.big-btn .icon {
+  font-size: 3rem;
+}
+
+.big-btn .text h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: var(--accent-1);
+}
+
+.big-btn .text p {
+  margin: 5px 0 0;
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  font-weight: 500;
+}
+
+/* Optional: Make the "Create" button stand out slightly differently if desired */
+.big-btn.secondary .icon {
+  filter: grayscale(100%);
+  opacity: 0.7;
+}
+.big-btn.secondary:hover .icon {
+  filter: none;
+  opacity: 1;
+}
