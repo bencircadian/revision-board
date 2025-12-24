@@ -26,9 +26,8 @@ const MathDisplay = ({ text, fontSize }) => {
 
 function App() {
   // --- STATE ---
-  // Views: 'home' | 'selector' | 'create-class' | 'dashboard' | 'create-dna'
   const [view, setView] = useState('home'); 
-  const [currentClass, setCurrentClass] = useState(null); // Stores the selected class object
+  const [currentClass, setCurrentClass] = useState(null);
   
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -41,41 +40,17 @@ function App() {
     setDateStr(new Date().toLocaleDateString('en-GB', options));
   }, []);
 
-  // --- NAVIGATION ACTIONS ---
+  // --- NAVIGATION ---
+  const goHome = () => { setView('home'); setCards([]); setRatings({}); setCurrentClass(null); };
+  const startClassSelection = () => setView('selector');
+  const handleClassSelected = (cls) => { setCurrentClass(cls); setView('dashboard'); fetchAndInitCards(cls); };
+  const handleCreateNewClass = () => setView('create-class');
+  const handleClassCreated = () => setView('selector');
 
-  const goHome = () => {
-    setView('home');
-    setCards([]);
-    setRatings({});
-    setCurrentClass(null);
-  };
-
-  const startClassSelection = () => {
-    setView('selector');
-  };
-
-  const handleClassSelected = (cls) => {
-    setCurrentClass(cls);
-    setView('dashboard');
-    fetchAndInitCards(cls);
-  };
-
-  const handleCreateNewClass = () => {
-    setView('create-class');
-  };
-
-  const handleClassCreated = () => {
-    setView('selector'); // Go back to list after creating
-  };
-
-  // --- DATA FETCHING (Spaced Repetition) ---
-
+  // --- DATA & GENERATORS ---
   async function fetchAndInitCards(classObj) {
     setLoading(true);
-    // Use the Real Class Name/ID from the selection
     const classId = classObj ? classObj.name : "Default Class"; 
-
-    console.log("Loading session for:", classId);
 
     // 1. Check Spaced Repetition
     const { data: dueCards } = await supabase.rpc('get_due_cards', { p_class_id: classId });
@@ -86,7 +61,6 @@ function App() {
     let newQuestions = [];
 
     if (slotsRemaining > 0) {
-      // TODO: Here you could filter by classObj.recent_topics if you wanted!
       const { data: dbData } = await supabase.from('questions').select('*');
       if (dbData) {
         const shuffled = dbData.sort(() => 0.5 - Math.random());
@@ -104,7 +78,6 @@ function App() {
       }
     }
 
-    // 3. Format cards
     const finalBoard = [
       ...reviewQuestions.map(q => ({
         ...q, id: `review-${Math.random()}`, currentQ: q.question_text, currentA: q.answer_text,
@@ -123,7 +96,6 @@ function App() {
     setLoading(false);
   }
 
-  // --- INTERACTION HANDLERS ---
   const handleCustomGeneration = (newCards) => {
     setCards(newCards);
     setRatings({}); 
@@ -133,6 +105,59 @@ function App() {
   function runGenerator(code) {
     try { return new Function(code)() } catch (e) { return { q: "Error", a: "..." } }
   }
+
+  // --- CARD ACTIONS (Zoom, Swap, Refresh) ---
+
+  const changeFontSize = (index, delta) => {
+    const newCards = [...cards];
+    newCards[index].fontSize = Math.max(0.5, Math.min(5.0, newCards[index].fontSize + delta));
+    setCards(newCards);
+  };
+
+  const refreshCard = (index) => {
+    // Re-run the generator for the SAME topic
+    const newCards = [...cards];
+    const card = newCards[index];
+    if (card.generator_code) {
+      const generated = runGenerator(card.generator_code);
+      card.currentQ = generated.q;
+      card.currentA = generated.a;
+      card.revealed = false;
+      // Reset rating for this card
+      const newRatings = { ...ratings };
+      delete newRatings[index];
+      setRatings(newRatings);
+      setCards(newCards);
+    } else {
+      alert("This is a fixed review card, it cannot be refreshed.");
+    }
+  };
+
+  const swapTopic = async (index) => {
+    // Fetch a completely random new question from DB
+    const { data } = await supabase.from('questions').select('*');
+    if (data && data.length > 0) {
+      const randomQ = data[Math.floor(Math.random() * data.length)];
+      const generated = runGenerator(randomQ.generator_code);
+      
+      const newCards = [...cards];
+      newCards[index] = {
+        ...randomQ,
+        id: `swap-${Math.random()}`,
+        currentQ: generated.q,
+        currentA: generated.a,
+        revealed: false,
+        fontSize: 1.4,
+        isReview: false
+      };
+      
+      // Reset rating
+      const newRatings = { ...ratings };
+      delete newRatings[index];
+      setRatings(newRatings);
+      setCards(newCards);
+    }
+  };
 
   const toggleReveal = (index) => {
     const newCards = [...cards];
@@ -153,7 +178,7 @@ function App() {
 
     const sessionData = {
       date: new Date().toISOString(),
-      class_id: currentClass ? currentClass.name : "Custom Session", // Save to the correct class
+      class_id: currentClass ? currentClass.name : "Custom Session",
       results: cards.map((card, index) => ({
         question_id: card.id, topic: card.topic, question_text: card.currentQ, 
         answer_text: card.currentA, score: ratings[index] || 0, 
@@ -168,20 +193,12 @@ function App() {
     goHome(); 
   };
 
-  // --- VIEW ROUTING ---
+  // --- RENDER ---
 
-  if (view === 'selector') {
-    return <ClassSelector onSelectClass={handleClassSelected} onCreateNew={handleCreateNewClass} />;
-  }
-
-  if (view === 'create-class') {
-    return <CreateClass onSave={handleClassCreated} onCancel={() => setView('selector')} />;
-  }
-
-  if (view === 'create-dna') {
-    return <CreateDNA onGenerate={handleCustomGeneration} onCancel={goHome} />;
-  }
-
+  if (view === 'selector') return <ClassSelector onSelectClass={handleClassSelected} onCreateNew={handleCreateNewClass} />;
+  if (view === 'create-class') return <CreateClass onSave={handleClassCreated} onCancel={() => setView('selector')} />;
+  if (view === 'create-dna') return <CreateDNA onGenerate={handleCustomGeneration} onCancel={goHome} />;
+  
   if (view === 'home') {
     return (
       <div className="home-container">
@@ -200,12 +217,10 @@ function App() {
             <div className="text"><h3>Create Custom DNA</h3><p>Build a starter manually</p></div>
           </button>
         </div>
-        {/* STYLES ARE IN App.css now */}
       </div>
     );
   }
 
-  // DASHBOARD VIEW
   if (loading) return <div style={{padding: 40}}>Loading Board...</div>;
 
   return (
@@ -230,16 +245,35 @@ function App() {
           {cards.map((card, index) => (
             <div key={card.id || index} className="question-card">
               <div className="card-header">
+                {/* 1. CARD NUMBER */}
                 <div className="card-number">{index + 1}</div>
+                
+                {/* 2. TOPIC NAME */}
                 <span className="card-topic">{card.isReview ? "↺ " : ""}{card.topic}</span>
-                <div className="card-actions">{ratings[index] !== undefined && <span className="rated-badge">✓</span>}</div>
+                
+                {/* 3. ACTION BUTTONS (Restored!) */}
+                <div className="card-actions">
+                  <div className="zoom-controls">
+                    <button className="zoom-btn" onClick={() => changeFontSize(index, -0.2)} title="Smaller Text">-</button>
+                    <button className="zoom-btn" onClick={() => changeFontSize(index, 0.2)} title="Bigger Text">+</button>
+                  </div>
+                  {!card.isReview && (
+                    <>
+                      <button className="card-btn" onClick={() => refreshCard(index)} title="New Question (Same Topic)">🔄</button>
+                      <button className="card-btn" onClick={() => swapTopic(index)} title="Change Topic">🔀</button>
+                    </>
+                  )}
+                  {ratings[index] !== undefined && <span className="rated-badge">✓</span>}
+                </div>
               </div>
+
               <div className="card-content">
                 <div className="question-text"><MathDisplay text={card.currentQ} fontSize={card.fontSize} /></div>
                 <div className={`answer-overlay ${card.revealed ? 'visible' : ''}`}>
                    <div className="answer-overlay-text"><MathDisplay text={card.currentA} fontSize={2} /></div>
                 </div>
               </div>
+
               <div className="card-footer" style={{ justifyContent: 'space-between' }}>
                 <div className="perf-buttons">
                   <button className={`perf-btn ${ratings[index] === 100 ? 'active green' : ''}`} onClick={() => handleRating(index, 100)}>🌟</button>
