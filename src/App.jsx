@@ -182,14 +182,14 @@ function App() {
                   </div>
 
                   {/* Change Topic Button (Shuffle Icon) */}
-                  <button className="card-btn" onClick={() => alert("Logic to change topic coming soon!")} title="Change Topic">
+                  <button className="card-btn" onClick={() => alert("Logic to change topic coming soon!")} title="Change topic">
                     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                       <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
                     </svg>
                   </button>
 
                   {/* Refresh Numbers Button (Rotate Icon) */}
-                  <button className="card-btn" onClick={() => refreshCard(index)} title="New Question">
+                  <button className="card-btn" onClick={() => refreshCard(index)} title="Refresh question">
                     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                       <path d="M23 4v6h-6"/>
                       <path d="M1 20v-6h6"/>
