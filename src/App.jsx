@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
-import CreateDna from './CreateDna' // This imports your new component
+import CreateDna from './CreateDna.jsx' // This imports your new component
 import './App.css'
 
 // --- Helper: Math Display ---
