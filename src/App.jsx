@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
-import CreateDna from './CreateDna'
+import CreateDNA from './CreateDNA'
 import './App.css'
 
 // --- Helper: Math Display ---
