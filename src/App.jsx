@@ -171,7 +171,7 @@ function App() {
     goHome(); 
   };
 
-  // --- UPDATED BUTTONS WITH TEXT LABELS ---
+  // --- RENDER PERFORMANCE BUTTONS ---
   const renderPerformanceButtons = (index) => {
     if (!cards[index].revealed) return <div style={{color: '#ccc', fontSize: '0.9rem'}}>Reveal to grade</div>;
     const currentScore = ratings[index];
@@ -246,15 +246,15 @@ function App() {
                   </div>
                   {!card.isReview && (
                     <>
-                      <button className="card-btn" onClick={() => refreshCard(index)} title="New Question (Same Topic)">🔄</button>
-                      <button className="card-btn" onClick={() => swapTopic(index)} title="Change Topic">🔀</button>
+                      {/* UPDATED: Text Buttons */}
+                      <button className="card-btn" onClick={() => refreshCard(index)}>REFRESH</button>
+                      <button className="card-btn" onClick={() => swapTopic(index)}>CHANGE TOPIC</button>
                     </>
                   )}
                   {ratings[index] !== undefined && <span className="rated-badge">✓</span>}
                 </div>
               </div>
 
-              {/* UPDATED CONTENT DIV WITH CONDITIONAL CLASS */}
               <div className={`card-content ${card.revealed ? 'revealed-mode' : ''}`}>
                 <div className="question-text"><MathDisplay text={card.currentQ} fontSize={card.fontSize} /></div>
                 <div className={`answer-overlay ${card.revealed ? 'visible' : ''}`}>
