@@ -169,8 +169,16 @@ function App() {
                 <span className="card-topic">{card.topic}</span>
                 <div className="card-actions">
                   <div className="zoom-controls">
-                    <button className="zoom-btn" onClick={() => changeFontSize(index, -0.2)}>−</button>
-                    <button className="zoom-btn" onClick={() => changeFontSize(index, 0.2)}>+</button>
+                   <button className="zoom-btn" onClick={() => changeFontSize(index, -0.2)} title="Smaller text">
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <path d="M5 12h14"/>
+  </svg>
+</button>
+<button className="zoom-btn" onClick={() => changeFontSize(index, 0.2)} title="Larger text">
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <path d="M12 5v14M5 12h14"/>
+  </svg>
+</button>
                   </div>
                   {/* Reuse refresh icon for single card refresh */}
                   <button className="card-btn" onClick={() => refreshCard(index)} title="New Question">
