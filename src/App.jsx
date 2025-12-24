@@ -10,7 +10,6 @@ const MathDisplay = ({ text, fontSize }) => {
     if (containerRef.current && window.katex) {
       // Basic replace logic for $...$
       let html = text || "";
-      // Render the math
       html = html.replace(/\$([^$]+)\$/g, (match, latex) => {
         try {
           return window.katex.renderToString(latex, { throwOnError: false });
@@ -30,7 +29,6 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [dateStr, setDateStr] = useState("");
 
-  // Set the date on load
   useEffect(() => {
     const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
     setDateStr(new Date().toLocaleDateString('en-GB', options));
@@ -38,24 +36,61 @@ function App() {
   }, []);
 
   async function fetchAndInitCards() {
-    // 1. Fetch questions from Supabase
+    // 1. Fetch real questions from Supabase
     const { data, error } = await supabase.from('questions').select('*');
     
-    if (error) {
-      console.error('Error:', error);
-      setLoading(false);
-      return;
+    let dbQuestions = [];
+    if (!error && data) {
+      dbQuestions = data;
     }
 
-    // 2. Initialize card state (run generators for the first time)
-    const initializedCards = data.map(q => {
+    // 2. Create "Stand-in" Placeholders to fill the grid up to 6
+    const placeholdersNeeded = 6 - dbQuestions.length;
+    const placeholders = [
+      {
+        id: 'p-1',
+        topic: 'Geometry',
+        difficulty: 'Medium',
+        generator_code: `return { q: "Find area of circle r=5", a: "$25\\\\pi$" }`
+      },
+      {
+        id: 'p-2',
+        topic: 'Algebra',
+        difficulty: 'Hard',
+        generator_code: `return { q: "Solve $2x + 5 = 15$", a: "$x = 5$" }`
+      },
+      {
+        id: 'p-3',
+        topic: 'Ratio',
+        difficulty: 'Easy',
+        generator_code: `return { q: "Simplify $15:25$", a: "$3:5$" }`
+      },
+      {
+        id: 'p-4',
+        topic: 'Data',
+        difficulty: 'Medium',
+        generator_code: `return { q: "Mean of 2, 4, 6, 8", a: "$5$" }`
+      }
+    ];
+
+    // Combine Real DB questions + Placeholders
+    // We take all DB questions, then append just enough placeholders to reach 6
+    const combinedData = [...dbQuestions];
+    for (let i = 0; i < placeholdersNeeded; i++) {
+      if (placeholders[i]) {
+         combinedData.push(placeholders[i]);
+      }
+    }
+
+    // 3. Initialize the state for all cards
+    const initializedCards = combinedData.map(q => {
       const generated = runGenerator(q.generator_code);
       return {
         ...q,
         currentQ: generated.q,
         currentA: generated.a,
         revealed: false,
-        fontSize: 1.4 // Default size
+        fontSize: 1.4
       };
     });
     
@@ -63,9 +98,8 @@ function App() {
     setLoading(false);
   }
 
-  // Safe generator runner
   function runGenerator(code) {
-    if (!code) return { q: "No generator code", a: "..." };
+    if (!code) return { q: "Error in code", a: "..." };
     try {
       const generator = new Function(code);
       return generator();
@@ -74,7 +108,8 @@ function App() {
     }
   }
 
-  // Actions
+  // --- ACTIONS ---
+
   const toggleReveal = (index) => {
     const newCards = [...cards];
     newCards[index].revealed = !newCards[index].revealed;
@@ -87,7 +122,7 @@ function App() {
     const newData = runGenerator(card.generator_code);
     card.currentQ = newData.q;
     card.currentA = newData.a;
-    card.revealed = false; // Hide answer on refresh
+    card.revealed = false;
     setCards(newCards);
   };
 
@@ -113,9 +148,8 @@ function App() {
     setCards(newCards);
   };
 
-  // Star generator helper
   const renderStars = (difficulty) => {
-    let filled = 2; // easy
+    let filled = 2; // easy default
     if (difficulty === 'Medium') filled = 4;
     if (difficulty === 'Hard') filled = 6;
     
@@ -163,33 +197,30 @@ function App() {
 
         <div className="questions-grid">
           {cards.map((card, index) => (
-            <div key={card.id} className="question-card">
+            <div key={card.id || index} className="question-card">
               <div className="card-header">
                 <div className="card-number">{index + 1}</div>
                 <span className="card-topic">{card.topic}</span>
+                
                 <div className="card-actions">
                   <div className="zoom-controls">
                     <button className="zoom-btn" onClick={() => changeFontSize(index, -0.2)} title="Smaller text">
-                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                        <path d="M5 12h14"/>
-                      </svg>
+                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>
                     </button>
                     <button className="zoom-btn" onClick={() => changeFontSize(index, 0.2)} title="Larger text">
-                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                        <path d="M12 5v14M5 12h14"/>
-                      </svg>
+                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
                     </button>
                   </div>
 
-                  {/* Change Topic Button (Shuffle Icon) */}
-                  <button className="card-btn" onClick={() => alert("Logic to change topic coming soon!")} title="Change topic">
+                  {/* Change Topic Button */}
+                  <button className="card-btn" onClick={() => alert("Change topic logic coming soon!")} title="Change Topic">
                     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                       <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
                     </svg>
                   </button>
 
-                  {/* Refresh Numbers Button (Rotate Icon) */}
-                  <button className="card-btn" onClick={() => refreshCard(index)} title="Refresh question">
+                  {/* Refresh Numbers Button */}
+                  <button className="card-btn" onClick={() => refreshCard(index)} title="New Question">
                     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                       <path d="M23 4v6h-6"/>
                       <path d="M1 20v-6h6"/>
