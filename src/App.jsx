@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
-import CreateDNA from './CreateDNA.jsx' // This imports your new component
+import CreateDna from './CreateDna'
 import './App.css'
 
 // --- Helper: Math Display ---
@@ -26,9 +26,10 @@ const MathDisplay = ({ text, fontSize }) => {
 
 function App() {
   // --- STATE ---
-  const [view, setView] = useState('dashboard'); // 'dashboard' or 'create'
+  // Views: 'home' | 'dashboard' | 'create'
+  const [view, setView] = useState('home'); 
   const [cards, setCards] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [dateStr, setDateStr] = useState("");
   const [ratings, setRatings] = useState({});
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -36,10 +37,27 @@ function App() {
   useEffect(() => {
     const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
     setDateStr(new Date().toLocaleDateString('en-GB', options));
-    fetchAndInitCards(); 
   }, []);
 
-  // --- DATA FETCHING ---
+  // --- ACTIONS ---
+
+  const goToDashboard = () => {
+    setView('dashboard');
+    fetchAndInitCards(); // Only fetch when entering dashboard
+  };
+
+  const goToCreate = () => {
+    setView('create');
+    setCards([]); // Clear any previous cards
+  };
+
+  const goHome = () => {
+    setView('home');
+    setCards([]);
+    setRatings({});
+  };
+
+  // --- DATA FETCHING (Spaced Repetition) ---
 
   async function fetchAndInitCards() {
     setLoading(true);
@@ -102,11 +120,11 @@ function App() {
     setLoading(false);
   }
 
-  // --- NEW: Handle Custom Generated Board ---
+  // --- HANDLE CUSTOM DNA ---
   const handleCustomGeneration = (newCards) => {
     setCards(newCards);
-    setRatings({}); // Reset any old ratings
-    setView('dashboard'); // Go back to board
+    setRatings({}); 
+    setView('dashboard'); 
   };
 
   function runGenerator(code) {
@@ -168,6 +186,7 @@ function App() {
     else alert("Session Saved!");
     
     setShowSaveModal(false);
+    goHome(); // Return to home after saving
   };
 
   const renderPerformanceButtons = (index) => {
@@ -183,30 +202,81 @@ function App() {
     );
   };
 
-  // --- RENDER ---
+  // --- RENDER VIEWS ---
 
-  // 1. The Switcher Logic
-  if (view === 'create') {
-    return <CreateDNA onGenerate={handleCustomGeneration} onCancel={() => setView('dashboard')} />;
+  // 1. HOME SCREEN VIEW
+  if (view === 'home') {
+    return (
+      <div className="home-container">
+        <div className="home-header">
+          <div className="logo-large">R</div>
+          <h1>Revision Board</h1>
+          <p>{dateStr}</p>
+        </div>
+
+        <div className="home-actions">
+          <button className="big-btn primary" onClick={goToDashboard}>
+            <span className="icon">🧠</span>
+            <div className="text">
+              <h3>My Class DNAs</h3>
+              <p>Continue spaced repetition for Year 10</p>
+            </div>
+          </button>
+
+          <button className="big-btn secondary" onClick={goToCreate}>
+            <span className="icon">🧬</span>
+            <div className="text">
+              <h3>Create Custom DNA</h3>
+              <p>Build a starter from specific topics</p>
+            </div>
+          </button>
+        </div>
+
+        <style>{`
+          .home-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #faf9f7; }
+          .home-header { text-align: center; margin-bottom: 50px; }
+          .logo-large { font-size: 3rem; font-weight: 800; color: white; background: #2c3e50; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+          .home-header h1 { color: #2c3e50; margin: 0; font-size: 2.5rem; }
+          .home-header p { color: #7f8c8d; margin-top: 10px; font-size: 1.2rem; }
+          
+          .home-actions { display: flex; gap: 30px; }
+          .big-btn { display: flex; align-items: center; gap: 20px; padding: 30px; width: 320px; border: none; border-radius: 16px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: left; }
+          .big-btn:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+          
+          .big-btn.primary { background: white; border: 2px solid #e0e0e0; }
+          .big-btn.primary .icon { font-size: 3rem; }
+          .big-btn.primary h3 { margin: 0; color: #2c3e50; font-size: 1.4rem; }
+          
+          .big-btn.secondary { background: #2c3e50; color: white; }
+          .big-btn.secondary .icon { font-size: 3rem; }
+          .big-btn.secondary h3 { margin: 0; color: white; font-size: 1.4rem; }
+          .big-btn.secondary p { color: #bdc3c7; }
+          
+          .text p { margin: 5px 0 0; font-size: 0.9rem; color: #7f8c8d; }
+        `}</style>
+      </div>
+    );
   }
 
+  // 2. CREATE VIEW
+  if (view === 'create') {
+    return <CreateDna onGenerate={handleCustomGeneration} onCancel={goHome} />;
+  }
+
+  // 3. DASHBOARD VIEW (Grid)
   if (loading) return <div style={{padding: 40}}>Loading Board...</div>;
 
   return (
     <div>
       <header>
-        <div className="logo">
+        <div className="logo" onClick={goHome} style={{cursor: 'pointer'}}>
           <div className="logo-mark">R</div>
           <span className="logo-text">Revision Board</span>
         </div>
         <div className="header-controls">
-          {/* 2. The Button to trigger it */}
-          <button className="btn btn-primary" onClick={() => setView('create')}>
-            + Create DNA
-          </button>
-          
           <button className="btn btn-secondary" onClick={() => setRatings({})}>Reset</button>
           <button className="btn btn-secondary" onClick={() => window.print()}>Print</button>
+          <button className="btn btn-primary" onClick={goHome}>Exit</button>
         </div>
       </header>
 
@@ -269,7 +339,7 @@ function App() {
         </div>
       )}
 
-      {/* STYLES */}
+      {/* RE-USING STYLES FROM BEFORE */}
       <style>{`
         .perf-buttons { display: flex; gap: 5px; }
         .perf-btn { width: 32px; height: 32px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9f9; cursor: pointer; font-size: 1.1rem; padding: 0; display: flex; align-items: center; justify-content: center; opacity: 0.5; transition: all 0.2s; }
