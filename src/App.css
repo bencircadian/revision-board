@@ -126,22 +126,46 @@ main {
 
 .rated-badge { color: #27ae60; font-weight: bold; margin-left: 5px; }
 
-/* --- CARD CONTENT --- */
+/* --- CARD CONTENT (NEW LAYOUT) --- */
 .card-content {
   flex: 1; display: flex; align-items: center; justify-content: center;
   padding: 20px; position: relative; text-align: center;
+  transition: all 0.3s;
 }
-.question-text { font-size: 1.4rem; font-weight: 500; color: var(--text); width: 100%; }
+
+/* Fade out the question when revealed */
+.card-content.revealed-mode .question-text {
+  opacity: 0.2; /* 20% opacity */
+}
+
+.question-text { font-size: 1.4rem; font-weight: 500; color: var(--text); width: 100%; transition: opacity 0.3s; }
 
 .answer-overlay {
-  position: absolute; inset: 0; background: rgba(255,255,255,0.98);
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; pointer-events: none; transition: 0.2s;
+  position: absolute; 
+  inset: 0; 
+  background: transparent; /* See-through! */
+  display: flex; 
+  align-items: flex-end; /* Bottom alignment */
+  justify-content: center;
+  padding-bottom: 30px; /* Offset from bottom */
+  opacity: 0; 
+  pointer-events: none; 
+  transition: 0.3s;
 }
 .answer-overlay.visible { opacity: 1; pointer-events: auto; }
-.answer-overlay-text { font-size: 1.8rem; font-weight: bold; color: var(--accent-2); }
 
-/* --- CARD FOOTER (TEXT BUTTONS UPDATE) --- */
+.answer-overlay-text { 
+  font-size: 2rem; 
+  font-weight: 800; 
+  color: #27ae60; /* Bright Green */
+  background: rgba(255,255,255,0.9); /* Slight background to make it readable over faded question */
+  padding: 10px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  margin-bottom: 10px;
+}
+
+/* --- CARD FOOTER --- */
 .card-footer {
   padding: 12px 15px; border-top: 1px solid #eee;
   display: flex; align-items: center; justify-content: space-between;
