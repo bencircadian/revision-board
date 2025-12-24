@@ -106,7 +106,7 @@ function App() {
     try { return new Function(code)() } catch (e) { return { q: "Error", a: "..." } }
   }
 
-  // --- CARD ACTIONS (Zoom, Swap, Refresh) ---
+  // --- CARD ACTIONS ---
 
   const changeFontSize = (index, delta) => {
     const newCards = [...cards];
@@ -115,46 +115,24 @@ function App() {
   };
 
   const refreshCard = (index) => {
-    // Re-run the generator for the SAME topic
     const newCards = [...cards];
     const card = newCards[index];
     if (card.generator_code) {
       const generated = runGenerator(card.generator_code);
-      card.currentQ = generated.q;
-      card.currentA = generated.a;
-      card.revealed = false;
-      // Reset rating for this card
-      const newRatings = { ...ratings };
-      delete newRatings[index];
-      setRatings(newRatings);
+      card.currentQ = generated.q; card.currentA = generated.a; card.revealed = false;
+      const newRatings = { ...ratings }; delete newRatings[index]; setRatings(newRatings);
       setCards(newCards);
-    } else {
-      alert("This is a fixed review card, it cannot be refreshed.");
-    }
+    } else { alert("This is a fixed review card, it cannot be refreshed."); }
   };
 
   const swapTopic = async (index) => {
-    // Fetch a completely random new question from DB
     const { data } = await supabase.from('questions').select('*');
     if (data && data.length > 0) {
       const randomQ = data[Math.floor(Math.random() * data.length)];
       const generated = runGenerator(randomQ.generator_code);
-      
       const newCards = [...cards];
-      newCards[index] = {
-        ...randomQ,
-        id: `swap-${Math.random()}`,
-        currentQ: generated.q,
-        currentA: generated.a,
-        revealed: false,
-        fontSize: 1.4,
-        isReview: false
-      };
-      
-      // Reset rating
-      const newRatings = { ...ratings };
-      delete newRatings[index];
-      setRatings(newRatings);
+      newCards[index] = { ...randomQ, id: `swap-${Math.random()}`, currentQ: generated.q, currentA: generated.a, revealed: false, fontSize: 1.4, isReview: false };
+      const newRatings = { ...ratings }; delete newRatings[index]; setRatings(newRatings);
       setCards(newCards);
     }
   };
@@ -193,7 +171,23 @@ function App() {
     goHome(); 
   };
 
-  // --- RENDER ---
+  // --- UPDATED RENDER PERFORMANCE BUTTONS ---
+  const renderPerformanceButtons = (index) => {
+    if (!cards[index].revealed) return <div style={{color: '#ccc', fontSize: '0.9rem'}}>Reveal to grade</div>;
+    const currentScore = ratings[index];
+    // New icons: ✓, 👍, 👎, ✕
+    // Added specific classes (btn-tick, btn-up, etc.) for styling
+    return (
+      <div className="perf-buttons">
+        <button className={`perf-btn btn-tick ${currentScore === 100 ? 'active' : ''}`} onClick={() => handleRating(index, 100)} title="Everyone Correct">✓</button>
+        <button className={`perf-btn btn-up ${currentScore === 75 ? 'active' : ''}`} onClick={() => handleRating(index, 75)} title="Majority Correct">👍</button>
+        <button className={`perf-btn btn-down ${currentScore === 25 ? 'active' : ''}`} onClick={() => handleRating(index, 25)} title="Minority Correct">👎</button>
+        <button className={`perf-btn btn-cross ${currentScore === 0 ? 'active' : ''}`} onClick={() => handleRating(index, 0)} title="No one Correct">✕</button>
+      </div>
+    );
+  };
+
+  // --- RENDER VIEWS ---
 
   if (view === 'selector') return <ClassSelector onSelectClass={handleClassSelected} onCreateNew={handleCreateNewClass} />;
   if (view === 'create-class') return <CreateClass onSave={handleClassCreated} onCancel={() => setView('selector')} />;
@@ -245,13 +239,8 @@ function App() {
           {cards.map((card, index) => (
             <div key={card.id || index} className="question-card">
               <div className="card-header">
-                {/* 1. CARD NUMBER */}
                 <div className="card-number">{index + 1}</div>
-                
-                {/* 2. TOPIC NAME */}
                 <span className="card-topic">{card.isReview ? "↺ " : ""}{card.topic}</span>
-                
-                {/* 3. ACTION BUTTONS (Restored!) */}
                 <div className="card-actions">
                   <div className="zoom-controls">
                     <button className="zoom-btn" onClick={() => changeFontSize(index, -0.2)} title="Smaller Text">-</button>
@@ -275,12 +264,7 @@ function App() {
               </div>
 
               <div className="card-footer" style={{ justifyContent: 'space-between' }}>
-                <div className="perf-buttons">
-                  <button className={`perf-btn ${ratings[index] === 100 ? 'active green' : ''}`} onClick={() => handleRating(index, 100)}>🌟</button>
-                  <button className={`perf-btn ${ratings[index] === 75 ? 'active yellow' : ''}`} onClick={() => handleRating(index, 75)}>👍</button>
-                  <button className={`perf-btn ${ratings[index] === 25 ? 'active orange' : ''}`} onClick={() => handleRating(index, 25)}>⚠️</button>
-                  <button className={`perf-btn ${ratings[index] === 0 ? 'active red' : ''}`} onClick={() => handleRating(index, 0)}>❌</button>
-                </div>
+                {renderPerformanceButtons(index)}
                 <button className="reveal-btn" onClick={() => toggleReveal(index)}>{card.revealed ? 'Hide' : 'Reveal'}</button>
               </div>
             </div>
