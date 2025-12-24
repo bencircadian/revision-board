@@ -254,7 +254,8 @@ function App() {
                 </div>
               </div>
 
-              <div className="card-content">
+              {/* UPDATED CONTENT DIV WITH CONDITIONAL CLASS */}
+              <div className={`card-content ${card.revealed ? 'revealed-mode' : ''}`}>
                 <div className="question-text"><MathDisplay text={card.currentQ} fontSize={card.fontSize} /></div>
                 <div className={`answer-overlay ${card.revealed ? 'visible' : ''}`}>
                    <div className="answer-overlay-text"><MathDisplay text={card.currentA} fontSize={2} /></div>
