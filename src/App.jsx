@@ -2,13 +2,12 @@ import { useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
 import './App.css'
 
-// Helper component to render Math/LaTeX safely
+// --- 1. Helper: Math Display (Existing) ---
 const MathDisplay = ({ text, fontSize }) => {
   const containerRef = useRef(null);
 
   useEffect(() => {
     if (containerRef.current && window.katex) {
-      // Basic replace logic for $...$
       let html = text || "";
       html = html.replace(/\$([^$]+)\$/g, (match, latex) => {
         try {
@@ -24,10 +23,101 @@ const MathDisplay = ({ text, fontSize }) => {
   return <div ref={containerRef} style={{ fontSize: `${fontSize}rem` }} className="math-content" />;
 };
 
+// --- 2. Helper: DNA Tracker Overlay (New) ---
+const DnaTrackerOverlay = ({ isOpen, onClose }) => {
+  // Dummy Data for the session (You can hook this up to Supabase later)
+  const [questions, setQuestions] = useState([
+    { id: 1, text: "Solve: 2x + 4 = 12", answer: "x = 4", score: null },
+    { id: 2, text: "Expand: 3(x + 5)", answer: "3x + 15", score: null },
+    { id: 3, text: "Simplify: 2a - a + b", answer: "a + b", score: null },
+    { id: 4, text: "Calculate: 15% of 40", answer: "6", score: null },
+  ]);
+
+  const handleScore = (id, value) => {
+    setQuestions(questions.map(q => 
+      q.id === id ? { ...q, score: value } : q
+    ));
+    console.log(`Saved score ${value} for Q${id}`);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="dna-backdrop">
+      <div className="dna-modal">
+        <div className="dna-header">
+          <div>
+            <h2 style={{ margin: 0, color: '#2c3e50' }}>🧬 DNA Session</h2>
+            <p style={{ margin: 0, color: '#7f8c8d', fontSize: '0.9rem' }}>Class 10A - Algebra</p>
+          </div>
+          <button onClick={onClose} className="close-btn">Close & Save</button>
+        </div>
+
+        <div className="dna-list">
+          {questions.map((q, index) => (
+            <div key={q.id} className="dna-row">
+              <div className="dna-q-number">{index + 1}</div>
+              <div className="dna-q-content">
+                <div className="dna-q-text">{q.text}</div>
+                <div className="dna-q-answer">
+                  Answer: <span>{q.answer}</span>
+                </div>
+              </div>
+              <div className="ranking-buttons">
+                <RankButton emoji="🌟" color="#27ae60" active={q.score === 100} onClick={() => handleScore(q.id, 100)} />
+                <RankButton emoji="👍" color="#f1c40f" active={q.score === 75} onClick={() => handleScore(q.id, 75)} />
+                <RankButton emoji="⚠️" color="#e67e22" active={q.score === 25} onClick={() => handleScore(q.id, 25)} />
+                <RankButton emoji="❌" color="#c0392b" active={q.score === 0} onClick={() => handleScore(q.id, 0)} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Embedded Styles for the Overlay */}
+      <style>{`
+        .dna-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .dna-modal { background: #f4f7f6; width: 90%; max-width: 800px; height: 80vh; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 25px 50px rgba(0,0,0,0.25); overflow: hidden; }
+        .dna-header { background: white; padding: 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        .dna-list { padding: 20px; overflow-y: auto; flex: 1; }
+        .dna-row { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .dna-q-number { font-size: 1.2rem; font-weight: bold; color: #bdc3c7; width: 40px; text-align: center; }
+        .dna-q-content { flex: 1; padding: 0 15px; }
+        .dna-q-text { font-weight: 600; color: #2c3e50; margin-bottom: 4px; font-size: 1.1rem; }
+        .dna-q-answer { font-size: 0.9rem; color: #7f8c8d; }
+        .dna-q-answer span { background: #bdc3c7; color: transparent; padding: 2px 6px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .dna-q-answer:hover span { background: #dff9fb; color: #2980b9; }
+        .ranking-buttons { display: flex; gap: 8px; }
+        .close-btn { background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+      `}</style>
+    </div>
+  );
+};
+
+// --- 3. Helper: Rank Button (New) ---
+const RankButton = ({ emoji, color, active, onClick }) => (
+  <button 
+    onClick={onClick}
+    style={{
+      width: '40px', height: '40px', fontSize: '1.2rem',
+      border: active ? `2px solid ${color}` : '1px solid transparent',
+      borderRadius: '8px', background: active ? 'white' : 'rgba(0,0,0,0.05)',
+      cursor: 'pointer', opacity: active ? 1 : 0.4, transition: '0.2s'
+    }}
+  >
+    {emoji}
+  </button>
+);
+
+
+// --- 4. Main App Component ---
 function App() {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dateStr, setDateStr] = useState("");
+  
+  // New State for Popup
+  const [isDnaOpen, setIsDnaOpen] = useState(false);
 
   useEffect(() => {
     const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
@@ -47,39 +137,15 @@ function App() {
     // 2. Create "Stand-in" Placeholders to fill the grid up to 6
     const placeholdersNeeded = 6 - dbQuestions.length;
     const placeholders = [
-      {
-        id: 'p-1',
-        topic: 'Geometry',
-        difficulty: 'Medium',
-        generator_code: `return { q: "Find area of circle r=5", a: "$25\\\\pi$" }`
-      },
-      {
-        id: 'p-2',
-        topic: 'Algebra',
-        difficulty: 'Hard',
-        generator_code: `return { q: "Solve $2x + 5 = 15$", a: "$x = 5$" }`
-      },
-      {
-        id: 'p-3',
-        topic: 'Ratio',
-        difficulty: 'Easy',
-        generator_code: `return { q: "Simplify $15:25$", a: "$3:5$" }`
-      },
-      {
-        id: 'p-4',
-        topic: 'Data',
-        difficulty: 'Medium',
-        generator_code: `return { q: "Mean of 2, 4, 6, 8", a: "$5$" }`
-      }
+      { id: 'p-1', topic: 'Geometry', difficulty: 'Medium', generator_code: `return { q: "Find area of circle r=5", a: "$25\\\\pi$" }` },
+      { id: 'p-2', topic: 'Algebra', difficulty: 'Hard', generator_code: `return { q: "Solve $2x + 5 = 15$", a: "$x = 5$" }` },
+      { id: 'p-3', topic: 'Ratio', difficulty: 'Easy', generator_code: `return { q: "Simplify $15:25$", a: "$3:5$" }` },
+      { id: 'p-4', topic: 'Data', difficulty: 'Medium', generator_code: `return { q: "Mean of 2, 4, 6, 8", a: "$5$" }` }
     ];
 
-    // Combine Real DB questions + Placeholders
-    // We take all DB questions, then append just enough placeholders to reach 6
     const combinedData = [...dbQuestions];
     for (let i = 0; i < placeholdersNeeded; i++) {
-      if (placeholders[i]) {
-         combinedData.push(placeholders[i]);
-      }
+      if (placeholders[i]) combinedData.push(placeholders[i]);
     }
 
     // 3. Initialize the state for all cards
@@ -168,12 +234,19 @@ function App() {
 
   return (
     <div>
+      {/* HEADER SECTION */}
       <header>
         <div className="logo">
           <div className="logo-mark">R</div>
           <span className="logo-text">Revision Board</span>
         </div>
         <div className="header-controls">
+          {/* NEW BUTTON: Start DNA Session */}
+          <button className="btn btn-primary" style={{ backgroundColor: '#2c3e50' }} onClick={() => setIsDnaOpen(true)}>
+             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{marginRight: 6}}><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+             Start Live DNA
+          </button>
+
           <button className="btn btn-secondary" onClick={refreshAll}>
             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
             Refresh All
@@ -189,6 +262,7 @@ function App() {
         </div>
       </header>
 
+      {/* MAIN CONTENT */}
       <main>
         <div className="title-bar">
           <input type="text" className="title-input" placeholder="Write your title here" />
@@ -212,14 +286,12 @@ function App() {
                     </button>
                   </div>
 
-                  {/* Change Topic Button */}
                   <button className="card-btn" onClick={() => alert("Change topic logic coming soon!")} title="Change Topic">
                     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                       <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
                     </svg>
                   </button>
 
-                  {/* Refresh Numbers Button */}
                   <button className="card-btn" onClick={() => refreshCard(index)} title="New Question">
                     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                       <path d="M23 4v6h-6"/>
@@ -252,6 +324,12 @@ function App() {
           ))}
         </div>
       </main>
+
+      {/* --- THE DNA OVERLAY --- */}
+      <DnaTrackerOverlay 
+        isOpen={isDnaOpen} 
+        onClose={() => setIsDnaOpen(false)} 
+      />
     </div>
   )
 }
