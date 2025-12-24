@@ -245,7 +245,9 @@ async function fetchAndInitCards() {
             <div key={card.id || index} className="question-card">
               <div className="card-header">
                 <div className="card-number">{index + 1}</div>
-                <span className="card-topic">{card.topic}</span>
+                  <span className="card-topic">
+                    {card.isReview ? "↺ " : ""}{card.topic}
+                  </span>
                 <div className="card-actions">
                   {/* Visual feedback if rated */}
                   {ratings[index] !== undefined && <span className="rated-badge">✓</span>}
