@@ -107,24 +107,35 @@ function App() {
     // 1. Construct the Payload
     const sessionData = {
       date: new Date().toISOString(),
-      class_id: "Year 10 - Set 2", // You can make this dynamic later
+      class_id: "Year 10 - Set 2", // TODO: Make this a dropdown later
       results: cards.map((card, index) => ({
-        question_id: card.id,
-        topic: card.topic,
-        question_text: card.currentQ, // Save exact numbers used
-        score: ratings[index] || 0
+        question_id: card.id,      // The ID of the generator used
+        topic: card.topic,         // Broad topic (e.g. "Algebra")
+        
+        // --- THIS IS THE CRITICAL PART ---
+        // We save the literal string currently on the screen.
+        // If the generator made "2x + 4", this saves "2x + 4".
+        question_text: card.currentQ, 
+        answer_text: card.currentA,
+        // ---------------------------------
+        
+        score: ratings[index] || 0 // The Red/Amber/Green score
       }))
     };
 
-    console.log("Saving to Supabase:", sessionData);
+    console.log("Saving exact snapshot:", sessionData);
 
-    // 2. Send to Supabase (Mocked for now - uncomment when table exists)
-    // const { error } = await supabase.from('dna_sessions').insert([sessionData]);
+    // 2. Send to Supabase
+    const { error } = await supabase.from('dna_sessions').insert([sessionData]);
     
-    // if (error) alert("Error saving session");
-    // else alert("Session Saved Successfully!");
+    if (error) {
+        alert("Error saving session: " + error.message);
+    } else {
+        alert("Session Saved Successfully!");
+    }
 
     setShowSaveModal(false);
+  };
     // Optional: Reset ratings or cards here if you want
   };
 
