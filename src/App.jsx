@@ -186,6 +186,7 @@ function App() {
 
   // --- RENDER ---
 
+  // 1. The Switcher Logic
   if (view === 'create') {
     return <CreateDna onGenerate={handleCustomGeneration} onCancel={() => setView('dashboard')} />;
   }
@@ -200,7 +201,7 @@ function App() {
           <span className="logo-text">Revision Board</span>
         </div>
         <div className="header-controls">
-          {/* THE NEW BUTTON */}
+          {/* 2. The Button to trigger it */}
           <button className="btn btn-primary" onClick={() => setView('create')}>
             + Create DNA
           </button>
