@@ -171,18 +171,16 @@ function App() {
     goHome(); 
   };
 
-  // --- UPDATED RENDER PERFORMANCE BUTTONS ---
+  // --- UPDATED BUTTONS WITH TEXT LABELS ---
   const renderPerformanceButtons = (index) => {
     if (!cards[index].revealed) return <div style={{color: '#ccc', fontSize: '0.9rem'}}>Reveal to grade</div>;
     const currentScore = ratings[index];
-    // New icons: ✓, 👍, 👎, ✕
-    // Added specific classes (btn-tick, btn-up, etc.) for styling
     return (
       <div className="perf-buttons">
-        <button className={`perf-btn btn-tick ${currentScore === 100 ? 'active' : ''}`} onClick={() => handleRating(index, 100)} title="Everyone Correct">✓</button>
-        <button className={`perf-btn btn-up ${currentScore === 75 ? 'active' : ''}`} onClick={() => handleRating(index, 75)} title="Majority Correct">👍</button>
-        <button className={`perf-btn btn-down ${currentScore === 25 ? 'active' : ''}`} onClick={() => handleRating(index, 25)} title="Minority Correct">👎</button>
-        <button className={`perf-btn btn-cross ${currentScore === 0 ? 'active' : ''}`} onClick={() => handleRating(index, 0)} title="No one Correct">✕</button>
+        <button className={`perf-btn btn-100 ${currentScore === 100 ? 'active' : ''}`} onClick={() => handleRating(index, 100)} title="All Correct">100%</button>
+        <button className={`perf-btn btn-most ${currentScore === 75 ? 'active' : ''}`} onClick={() => handleRating(index, 75)} title="Most Correct">MOST</button>
+        <button className={`perf-btn btn-some ${currentScore === 25 ? 'active' : ''}`} onClick={() => handleRating(index, 25)} title="Some Correct">SOME</button>
+        <button className={`perf-btn btn-nope ${currentScore === 0 ? 'active' : ''}`} onClick={() => handleRating(index, 0)} title="None Correct">NOPE!</button>
       </div>
     );
   };
