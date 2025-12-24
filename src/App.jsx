@@ -38,40 +38,76 @@ function App() {
     fetchAndInitCards();
   }, []);
 
-  async function fetchAndInitCards() {
-    // 1. Fetch real questions
-    const { data, error } = await supabase.from('questions').select('*');
-    let dbQuestions = data || [];
+async function fetchAndInitCards() {
+    const CLASS_ID = "Year 10 - Set 2"; // TODO: Make dynamic later
 
-    // 2. Placeholders if needed
-    const placeholdersNeeded = 6 - dbQuestions.length;
-    const placeholders = [
-      { id: 'p-1', topic: 'Geometry', difficulty: 'Medium', generator_code: `return { q: "Find area of circle r=5", a: "$25\\\\pi$" }` },
-      { id: 'p-2', topic: 'Algebra', difficulty: 'Hard', generator_code: `return { q: "Solve $2x + 5 = 15$", a: "$x = 5$" }` },
-      { id: 'p-3', topic: 'Ratio', difficulty: 'Easy', generator_code: `return { q: "Simplify $15:25$", a: "$3:5$" }` },
-      { id: 'p-4', topic: 'Data', difficulty: 'Medium', generator_code: `return { q: "Mean of 2, 4, 6, 8", a: "$5$" }` },
-      { id: 'p-5', topic: 'Number', difficulty: 'Easy', generator_code: `return { q: "Evaluate $2^3 + 4$", a: "$12$" }` },
-      { id: 'p-6', topic: 'Stats', difficulty: 'Hard', generator_code: `return { q: "Prob. of even number on D6", a: "$1/2$" }` }
-    ];
+    // 1. Fetch "DUE" cards from Spaced Repetition (The SQL function we just wrote)
+    const { data: dueCards, error: rpcError } = await supabase
+      .rpc('get_due_cards', { p_class_id: CLASS_ID });
 
-    const combinedData = [...dbQuestions];
-    for (let i = 0; i < placeholdersNeeded; i++) {
-      if (placeholders[i]) combinedData.push(placeholders[i]);
+    if (rpcError) console.error("SRS Error:", rpcError);
+    
+    // Ensure we have an array (even if empty)
+    const reviewQuestions = dueCards || [];
+    console.log(`Found ${reviewQuestions.length} cards due for review.`);
+
+    // 2. Calculate how many NEW cards we need to fill the board (Total 6)
+    const slotsRemaining = 6 - reviewQuestions.length;
+    let newQuestions = [];
+
+    if (slotsRemaining > 0) {
+      // 3. Fetch random NEW questions from database
+      const { data: dbData } = await supabase.from('questions').select('*');
+      
+      // Shuffle and pick 'slotsRemaining' amount
+      if (dbData) {
+        const shuffled = dbData.sort(() => 0.5 - Math.random());
+        newQuestions = shuffled.slice(0, slotsRemaining);
+      }
+      
+      // If DB is empty, use placeholders (Safe Fallback)
+      if (newQuestions.length < slotsRemaining) {
+        const placeholders = [
+           { topic: 'Algebra', generator_code: `return { q: "Solve $2x=10$", a: "$x=5$" }` },
+           { topic: 'Geometry', generator_code: `return { q: "Area of sq side 4", a: "$16$" }` },
+           { topic: 'Number', generator_code: `return { q: "Calc $10-3$", a: "$7$" }` },
+           { topic: 'Ratio', generator_code: `return { q: "Share 10 in 2:3", a: "$4:6$" }` }
+        ];
+        // Fill the rest
+        const needed = slotsRemaining - newQuestions.length;
+        for(let i=0; i<needed; i++) newQuestions.push(placeholders[i % placeholders.length]);
+      }
     }
 
-    // 3. Init State
-    const initializedCards = combinedData.slice(0, 6).map(q => {
-      const generated = runGenerator(q.generator_code);
-      return {
-        ...q,
-        currentQ: generated.q,
-        currentA: generated.a,
-        revealed: false,
-        fontSize: 1.4
-      };
-    });
+    // 4. Combine Review + New
+    // Review cards don't have generator_code, they have explicit text.
+    // New cards need to be generated.
     
-    setCards(initializedCards);
+    const finalBoard = [
+      ...reviewQuestions.map(q => ({
+        ...q,
+        id: `review-${Math.random()}`, // Unique ID
+        currentQ: q.question_text,     // Text is already saved
+        currentA: q.answer_text,
+        revealed: false,
+        fontSize: 1.4,
+        isReview: true                 // Flag to show it's a review card
+      })),
+      ...newQuestions.map(q => {
+        const generated = runGenerator(q.generator_code);
+        return {
+          ...q,
+          currentQ: generated.q,
+          currentA: generated.a,
+          revealed: false,
+          fontSize: 1.4,
+          isReview: false
+        };
+      })
+    ];
+
+    // Optional: Shuffle the board so Review cards aren't always first
+    setCards(finalBoard.sort(() => 0.5 - Math.random()));
     setLoading(false);
   }
 
