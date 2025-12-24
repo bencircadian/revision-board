@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
-import CreateDNA from './CreateDNA' // matches the filename exactly
+import CreateDNA from './CreateDNA'
+import ClassSelector from './ClassSelector'
+import CreateClass from './CreateClass'
 import './App.css'
 
 // --- Helper: Math Display ---
@@ -13,9 +15,7 @@ const MathDisplay = ({ text, fontSize }) => {
       html = html.replace(/\$([^$]+)\$/g, (match, latex) => {
         try {
           return window.katex.renderToString(latex, { throwOnError: false });
-        } catch (e) {
-          return match;
-        }
+        } catch (e) { return match; }
       });
       containerRef.current.innerHTML = html;
     }
@@ -26,8 +26,10 @@ const MathDisplay = ({ text, fontSize }) => {
 
 function App() {
   // --- STATE ---
-  // Views: 'home' | 'dashboard' | 'create'
+  // Views: 'home' | 'selector' | 'create-class' | 'dashboard' | 'create-dna'
   const [view, setView] = useState('home'); 
+  const [currentClass, setCurrentClass] = useState(null); // Stores the selected class object
+  
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(false);
   const [dateStr, setDateStr] = useState("");
@@ -41,46 +43,56 @@ function App() {
 
   // --- NAVIGATION ACTIONS ---
 
-  const goToDashboard = () => {
-    setView('dashboard');
-    fetchAndInitCards(); // Load the spaced repetition cards
-  };
-
-  const goToCreate = () => {
-    setView('create');
-    setCards([]); // Clear cards so we start fresh
-  };
-
   const goHome = () => {
     setView('home');
     setCards([]);
     setRatings({});
+    setCurrentClass(null);
+  };
+
+  const startClassSelection = () => {
+    setView('selector');
+  };
+
+  const handleClassSelected = (cls) => {
+    setCurrentClass(cls);
+    setView('dashboard');
+    fetchAndInitCards(cls);
+  };
+
+  const handleCreateNewClass = () => {
+    setView('create-class');
+  };
+
+  const handleClassCreated = () => {
+    setView('selector'); // Go back to list after creating
   };
 
   // --- DATA FETCHING (Spaced Repetition) ---
 
-  async function fetchAndInitCards() {
+  async function fetchAndInitCards(classObj) {
     setLoading(true);
-    const CLASS_ID = "Year 10 - Set 2"; 
+    // Use the Real Class Name/ID from the selection
+    const classId = classObj ? classObj.name : "Default Class"; 
 
-    // 1. Check Spaced Repetition (The "Brain")
-    const { data: dueCards } = await supabase.rpc('get_due_cards', { p_class_id: CLASS_ID });
-    
+    console.log("Loading session for:", classId);
+
+    // 1. Check Spaced Repetition
+    const { data: dueCards } = await supabase.rpc('get_due_cards', { p_class_id: classId });
     const reviewQuestions = dueCards || [];
-    console.log(`Found ${reviewQuestions.length} cards due for review.`);
 
-    // 2. Need to fill the rest of the 6 slots
+    // 2. Fill remaining slots
     const slotsRemaining = 6 - reviewQuestions.length;
     let newQuestions = [];
 
     if (slotsRemaining > 0) {
+      // TODO: Here you could filter by classObj.recent_topics if you wanted!
       const { data: dbData } = await supabase.from('questions').select('*');
       if (dbData) {
         const shuffled = dbData.sort(() => 0.5 - Math.random());
         newQuestions = shuffled.slice(0, slotsRemaining);
       }
-      
-      // Fallback if DB empty
+      // Fallback
       if (newQuestions.length < slotsRemaining) {
         const placeholders = [
            { topic: 'Algebra', generator_code: `return { q: "Solve $2x=10$", a: "$x=5$" }` },
@@ -92,26 +104,17 @@ function App() {
       }
     }
 
-    // 3. Format cards for the board
+    // 3. Format cards
     const finalBoard = [
       ...reviewQuestions.map(q => ({
-        ...q,
-        id: `review-${Math.random()}`, 
-        currentQ: q.question_text,     
-        currentA: q.answer_text,
-        revealed: false,
-        fontSize: 1.4,
-        isReview: true                 
+        ...q, id: `review-${Math.random()}`, currentQ: q.question_text, currentA: q.answer_text,
+        revealed: false, fontSize: 1.4, isReview: true
       })),
       ...newQuestions.map(q => {
         const generated = runGenerator(q.generator_code);
         return {
-          ...q,
-          currentQ: generated.q,
-          currentA: generated.a,
-          revealed: false,
-          fontSize: 1.4,
-          isReview: false
+          ...q, currentQ: generated.q, currentA: generated.a,
+          revealed: false, fontSize: 1.4, isReview: false
         };
       })
     ];
@@ -120,24 +123,16 @@ function App() {
     setLoading(false);
   }
 
-  // --- HANDLE CUSTOM DNA ---
+  // --- INTERACTION HANDLERS ---
   const handleCustomGeneration = (newCards) => {
     setCards(newCards);
     setRatings({}); 
-    setView('dashboard'); // Show the grid with the custom cards
+    setView('dashboard'); 
   };
 
   function runGenerator(code) {
-    if (!code) return { q: "Error", a: "..." };
-    try {
-      const generator = new Function(code);
-      return generator();
-    } catch (err) {
-      return { q: "Error", a: "Error" };
-    }
+    try { return new Function(code)() } catch (e) { return { q: "Error", a: "..." } }
   }
-
-  // --- INTERACTION HANDLERS ---
 
   const toggleReveal = (index) => {
     const newCards = [...cards];
@@ -148,63 +143,45 @@ function App() {
   const handleRating = (index, score) => {
     const newRatings = { ...ratings, [index]: score };
     setRatings(newRatings);
-
-    if (Object.keys(newRatings).length === cards.length) {
-      setTimeout(() => setShowSaveModal(true), 500); 
-    }
+    if (Object.keys(newRatings).length === cards.length) setTimeout(() => setShowSaveModal(true), 500); 
   };
 
   const saveSession = async () => {
     const getLessonInterval = (score) => {
-      switch (score) {
-        case 0:   return 1;   
-        case 25:  return 3;   
-        case 75:  return 6;   
-        case 100: return 12;  
-        default:  return 1;
-      }
+      switch (score) { case 0: return 1; case 25: return 3; case 75: return 6; case 100: return 12; default: return 1; }
     };
 
     const sessionData = {
       date: new Date().toISOString(),
-      class_id: "Year 10 - Set 2", 
-      results: cards.map((card, index) => {
-        const score = ratings[index] || 0;
-        return {
-          question_id: card.id,
-          topic: card.topic,
-          question_text: card.currentQ, 
-          answer_text: card.currentA,
-          score: score,
-          review_interval: getLessonInterval(score) 
-        };
-      })
+      class_id: currentClass ? currentClass.name : "Custom Session", // Save to the correct class
+      results: cards.map((card, index) => ({
+        question_id: card.id, topic: card.topic, question_text: card.currentQ, 
+        answer_text: card.currentA, score: ratings[index] || 0, 
+        review_interval: getLessonInterval(ratings[index] || 0) 
+      }))
     };
 
     const { error } = await supabase.from('dna_sessions').insert([sessionData]);
-    if (error) alert("Error saving: " + error.message);
+    if (error) alert("Error: " + error.message);
     else alert("Session Saved!");
-    
     setShowSaveModal(false);
     goHome(); 
   };
 
-  const renderPerformanceButtons = (index) => {
-    if (!cards[index].revealed) return <div style={{color: '#ccc', fontSize: '0.9rem'}}>Reveal to grade</div>;
-    const currentScore = ratings[index];
-    return (
-      <div className="perf-buttons">
-        <button className={`perf-btn ${currentScore === 100 ? 'active green' : ''}`} onClick={() => handleRating(index, 100)}>🌟</button>
-        <button className={`perf-btn ${currentScore === 75 ? 'active yellow' : ''}`} onClick={() => handleRating(index, 75)}>👍</button>
-        <button className={`perf-btn ${currentScore === 25 ? 'active orange' : ''}`} onClick={() => handleRating(index, 25)}>⚠️</button>
-        <button className={`perf-btn ${currentScore === 0 ? 'active red' : ''}`} onClick={() => handleRating(index, 0)}>❌</button>
-      </div>
-    );
-  };
+  // --- VIEW ROUTING ---
 
-  // --- RENDER VIEWS ---
+  if (view === 'selector') {
+    return <ClassSelector onSelectClass={handleClassSelected} onCreateNew={handleCreateNewClass} />;
+  }
 
-  // 1. HOME SCREEN (The Two Big Buttons)
+  if (view === 'create-class') {
+    return <CreateClass onSave={handleClassCreated} onCancel={() => setView('selector')} />;
+  }
+
+  if (view === 'create-dna') {
+    return <CreateDNA onGenerate={handleCustomGeneration} onCancel={goHome} />;
+  }
+
   if (view === 'home') {
     return (
       <div className="home-container">
@@ -213,69 +190,30 @@ function App() {
           <h1>Revision Board</h1>
           <p>{dateStr}</p>
         </div>
-
         <div className="home-actions">
-          <button className="big-btn primary" onClick={goToDashboard}>
+          <button className="big-btn primary" onClick={startClassSelection}>
             <span className="icon">🧠</span>
-            <div className="text">
-              <h3>My Class DNAs</h3>
-              <p>Continue spaced repetition for Year 10</p>
-            </div>
+            <div className="text"><h3>My Class DNAs</h3><p>Continue spaced repetition</p></div>
           </button>
-
-          <button className="big-btn secondary" onClick={goToCreate}>
+          <button className="big-btn secondary" onClick={() => setView('create-dna')}>
             <span className="icon">🧬</span>
-            <div className="text">
-              <h3>Create Custom DNA</h3>
-              <p>Build a starter from specific topics</p>
-            </div>
+            <div className="text"><h3>Create Custom DNA</h3><p>Build a starter manually</p></div>
           </button>
         </div>
-
-        {/* Home Styles */}
-        <style>{`
-          .home-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #faf9f7; padding: 20px; }
-          .home-header { text-align: center; margin-bottom: 50px; }
-          .logo-large { font-size: 3rem; font-weight: 800; color: white; background: #2c3e50; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
-          .home-header h1 { color: #2c3e50; margin: 0; font-size: 2.5rem; }
-          .home-header p { color: #7f8c8d; margin-top: 10px; font-size: 1.2rem; }
-          
-          .home-actions { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
-          .big-btn { display: flex; align-items: center; gap: 20px; padding: 30px; width: 320px; border: none; border-radius: 16px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: left; }
-          .big-btn:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-          
-          .big-btn.primary { background: white; border: 2px solid #e0e0e0; }
-          .big-btn.primary .icon { font-size: 3rem; }
-          .big-btn.primary h3 { margin: 0; color: #2c3e50; font-size: 1.4rem; }
-          
-          .big-btn.secondary { background: #2c3e50; color: white; }
-          .big-btn.secondary .icon { font-size: 3rem; }
-          .big-btn.secondary h3 { margin: 0; color: white; font-size: 1.4rem; }
-          .big-btn.secondary p { color: #bdc3c7; }
-          
-          .text p { margin: 5px 0 0; font-size: 0.9rem; color: #7f8c8d; }
-        `}</style>
+        {/* STYLES ARE IN App.css now */}
       </div>
     );
   }
 
-  // 2. CREATE VIEW (Fixed Typo Here)
-  if (view === 'create') {
-    // Note: Component name must match import name exactly
-    return <CreateDNA onGenerate={handleCustomGeneration} onCancel={goHome} />;
-  }
-
-  // 3. DASHBOARD VIEW (Grid)
+  // DASHBOARD VIEW
   if (loading) return <div style={{padding: 40}}>Loading Board...</div>;
 
   return (
     <div>
       <header>
-        <div className="logo" onClick={goHome} style={{cursor: 'pointer'}}>
-          <div className="logo-mark">R</div>
-          <span className="logo-text">Revision Board</span>
-        </div>
+        <div className="logo" onClick={goHome}><div className="logo-mark">R</div><span className="logo-text">Revision Board</span></div>
         <div className="header-controls">
+          {currentClass && <span style={{marginRight:10, fontWeight:'bold', color:'#2c3e50'}}>{currentClass.name}</span>}
           <button className="btn btn-secondary" onClick={() => setRatings({})}>Reset</button>
           <button className="btn btn-secondary" onClick={() => window.print()}>Print</button>
           <button className="btn btn-primary" onClick={goHome}>Exit</button>
@@ -284,7 +222,7 @@ function App() {
 
       <main>
         <div className="title-bar">
-          <input type="text" className="title-input" placeholder="Enter Class Name / Title" />
+          <input type="text" className="title-input" placeholder="Session Title" defaultValue={currentClass ? currentClass.name + " Starter" : ""} />
           <span className="date-display">{dateStr}</span>
         </div>
 
@@ -293,77 +231,45 @@ function App() {
             <div key={card.id || index} className="question-card">
               <div className="card-header">
                 <div className="card-number">{index + 1}</div>
-                <span className="card-topic">
-                  {card.isReview ? "↺ " : ""}{card.topic}
-                </span>
-                <div className="card-actions">
-                  {ratings[index] !== undefined && <span className="rated-badge">✓</span>}
-                </div>
+                <span className="card-topic">{card.isReview ? "↺ " : ""}{card.topic}</span>
+                <div className="card-actions">{ratings[index] !== undefined && <span className="rated-badge">✓</span>}</div>
               </div>
-
               <div className="card-content">
-                <div className="question-text">
-                   <MathDisplay text={card.currentQ} fontSize={card.fontSize} />
-                </div>
-                
+                <div className="question-text"><MathDisplay text={card.currentQ} fontSize={card.fontSize} /></div>
                 <div className={`answer-overlay ${card.revealed ? 'visible' : ''}`}>
-                   <div className="answer-overlay-text">
-                      <MathDisplay text={card.currentA} fontSize={2} />
-                   </div>
+                   <div className="answer-overlay-text"><MathDisplay text={card.currentA} fontSize={2} /></div>
                 </div>
               </div>
-
               <div className="card-footer" style={{ justifyContent: 'space-between' }}>
-                {renderPerformanceButtons(index)}
-                <button className="reveal-btn" onClick={() => toggleReveal(index)}>
-                  {card.revealed ? 'Hide' : 'Reveal'}
-                </button>
+                <div className="perf-buttons">
+                  <button className={`perf-btn ${ratings[index] === 100 ? 'active green' : ''}`} onClick={() => handleRating(index, 100)}>🌟</button>
+                  <button className={`perf-btn ${ratings[index] === 75 ? 'active yellow' : ''}`} onClick={() => handleRating(index, 75)}>👍</button>
+                  <button className={`perf-btn ${ratings[index] === 25 ? 'active orange' : ''}`} onClick={() => handleRating(index, 25)}>⚠️</button>
+                  <button className={`perf-btn ${ratings[index] === 0 ? 'active red' : ''}`} onClick={() => handleRating(index, 0)}>❌</button>
+                </div>
+                <button className="reveal-btn" onClick={() => toggleReveal(index)}>{card.revealed ? 'Hide' : 'Reveal'}</button>
               </div>
             </div>
           ))}
         </div>
       </main>
 
-      {/* MODAL */}
       {showSaveModal && (
         <div className="modal-backdrop">
           <div className="modal-box">
             <h3>📝 Session Complete</h3>
-            <p>Save performance data for <strong>Year 10 - Set 2</strong>?</p>
+            <p>Save progress for <strong>{currentClass ? currentClass.name : "Custom Session"}</strong>?</p>
             <div className="modal-stats">
               <div className="stat"><strong>Correct</strong><span style={{color: '#27ae60'}}>{Object.values(ratings).filter(r => r === 100).length}</span></div>
               <div className="stat"><strong>Struggling</strong><span style={{color: '#e67e22'}}>{Object.values(ratings).filter(r => r <= 25).length}</span></div>
             </div>
             <div className="modal-actions">
-              <button className="btn-cancel" onClick={() => setShowSaveModal(false)}>No, Don't Save</button>
-              <button className="btn-confirm" onClick={saveSession}>Yes, Save Data</button>
+              <button className="btn-cancel" onClick={() => setShowSaveModal(false)}>No</button>
+              <button className="btn-confirm" onClick={saveSession}>Yes, Save</button>
             </div>
           </div>
         </div>
       )}
-
-      {/* STYLES */}
-      <style>{`
-        .perf-buttons { display: flex; gap: 5px; }
-        .perf-btn { width: 32px; height: 32px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9f9; cursor: pointer; font-size: 1.1rem; padding: 0; display: flex; align-items: center; justify-content: center; opacity: 0.5; transition: all 0.2s; }
-        .perf-btn:hover { opacity: 1; transform: scale(1.1); }
-        .perf-btn.active { opacity: 1; border-width: 2px; background: white; transform: scale(1.15); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .perf-btn.active.green { border-color: #27ae60; }
-        .perf-btn.active.yellow { border-color: #f1c40f; }
-        .perf-btn.active.orange { border-color: #e67e22; }
-        .perf-btn.active.red { border-color: #c0392b; }
-        .rated-badge { color: #27ae60; font-weight: bold; font-size: 1.2rem; }
-        .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        .modal-box { background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .modal-stats { display: flex; justify-content: center; gap: 30px; margin: 20px 0; background: #f4f7f6; padding: 15px; border-radius: 8px; }
-        .stat { display: flex; flex-direction: column; }
-        .stat strong { font-size: 0.8rem; color: #7f8c8d; text-transform: uppercase; }
-        .stat span { font-size: 1.5rem; font-weight: bold; }
-        .modal-actions { display: flex; justify-content: center; gap: 15px; }
-        .btn-cancel { padding: 10px 20px; border: none; background: #e0e0e0; border-radius: 6px; cursor: pointer; color: #555; }
-        .btn-confirm { padding: 10px 20px; border: none; background: #2c3e50; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; }
-        .btn-confirm:hover { background: #34495e; }
-      `}</style>
     </div>
   )
 }
