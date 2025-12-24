@@ -104,34 +104,48 @@ function App() {
   };
 
   const saveSession = async () => {
+    
+    // --- NEW: Helper to calculate Lesson Intervals ---
+    const getLessonInterval = (score) => {
+      switch (score) {
+        case 0:   return 1;   // Red: Next lesson
+        case 25:  return 3;   // Orange: 3 lessons later
+        case 75:  return 6;   // Yellow: 6 lessons later
+        case 100: return 12;  // Green: 12 lessons later
+        default:  return 1;
+      }
+    };
+    // -------------------------------------------------
+
     // 1. Construct the Payload
     const sessionData = {
       date: new Date().toISOString(),
-      class_id: "Year 10 - Set 2", // TODO: Make this a dropdown later
-      results: cards.map((card, index) => ({
-        question_id: card.id,      // The ID of the generator used
-        topic: card.topic,         // Broad topic (e.g. "Algebra")
+      class_id: "Year 10 - Set 2", 
+      results: cards.map((card, index) => {
+        const score = ratings[index] || 0;
         
-        // --- THIS IS THE CRITICAL PART ---
-        // We save the literal string currently on the screen.
-        // If the generator made "2x + 4", this saves "2x + 4".
-        question_text: card.currentQ, 
-        answer_text: card.currentA,
-        // ---------------------------------
-        
-        score: ratings[index] || 0 // The Red/Amber/Green score
-      }))
+        return {
+          question_id: card.id,
+          topic: card.topic,
+          question_text: card.currentQ, 
+          answer_text: card.currentA,
+          score: score,
+          
+          // We save the "Next Review Gap" here
+          review_interval: getLessonInterval(score) 
+        };
+      })
     };
 
-    console.log("Saving exact snapshot:", sessionData);
+    console.log("Saving Lesson Data:", sessionData);
 
     // 2. Send to Supabase
     const { error } = await supabase.from('dna_sessions').insert([sessionData]);
     
     if (error) {
-        alert("Error saving session: " + error.message);
+        alert("Error saving: " + error.message);
     } else {
-        alert("Session Saved Successfully!");
+        alert("Session Saved! Spaced Repetition data updated.");
     }
 
     setShowSaveModal(false);
