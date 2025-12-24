@@ -1,4 +1,4 @@
-/* src/App.css - Fixed Layout & Buttons */
+/* src/App.css - Centered Layout */
 :root {
   --bg: #faf9f7;
   --bg-card: #ffffff;
@@ -53,56 +53,80 @@ header {
 .btn-primary { background: var(--accent-1); color: white; }
 .btn-primary:hover { background: #1d4ed8; }
 
-/* Main Layout */
+/* Main Layout - Centered */
 main { 
   padding: 20px 32px; 
-  max-width: 1400px; /* Wider to stop it feeling cramped */
+  max-width: 1400px;
   margin: 0 auto; 
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center content horizontally */
 }
 
-.title-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.title-bar { 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; /* Center the title */
+  margin-bottom: 20px; 
+  width: 100%;
+  position: relative;
+}
 .title-input {
   font-family: 'Inter', sans-serif; font-size: 1.5rem; font-weight: 600;
-  border: none; background: transparent; color: var(--text); outline: none; flex: 1;
+  border: none; background: transparent; color: var(--text); outline: none; 
+  text-align: center; /* Center text input */
+  width: 100%;
+}
+.date-display {
+  position: absolute;
+  right: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
 }
 
-/* Grid Logic Fix */
+/* Grid Logic - Centered */
 .questions-grid {
   display: grid;
-  /* This ensures exactly 3 columns that stretch to fill space */
   grid-template-columns: repeat(3, 1fr); 
-  /* Auto rows means it keeps adding rows as needed */
   grid-auto-rows: minmax(280px, auto);
   gap: 16px;
   padding-bottom: 2rem;
-  /* Fix alignment */
-  align-items: start; 
-  justify-content: start;
+  width: 100%;
+  justify-content: center; /* Center grid items */
 }
 
 /* Responsive Grid */
 @media (max-width: 1000px) {
   .questions-grid { grid-template-columns: repeat(2, 1fr); }
+  .date-display { position: static; margin-top: 10px; }
+  .title-bar { flex-direction: column; }
 }
 @media (max-width: 600px) {
   .questions-grid { grid-template-columns: 1fr; }
 }
 
-/* Question Card */
+/* Question Card - Centered Text */
 .question-card {
   background: var(--bg-card); border-radius: 16px; box-shadow: var(--shadow);
   overflow: hidden; display: flex; flex-direction: column; 
-  min-height: 280px; height: 100%; /* Fill the grid cell */
+  min-height: 280px; height: 100%;
+  text-align: center; /* Center all text inside card */
 }
 
-.card-header { padding: 8px 12px; display: flex; align-items: center; border-bottom: 1px solid var(--border); }
+.card-header { 
+  padding: 8px 12px; 
+  display: flex; 
+  align-items: center; 
+  border-bottom: 1px solid var(--border);
+  justify-content: space-between; /* Spread header items */
+}
 
-/* Card Colors */
 .card-number {
   width: 24px; height: 24px; border-radius: 6px; display: flex;
   align-items: center; justify-content: center; font-weight: 700;
   font-size: 0.75rem; color: white; margin-right: 8px; flex-shrink: 0;
 }
+/* Card Colors loops */
 .question-card:nth-child(6n+1) .card-number { background: var(--accent-1); }
 .question-card:nth-child(6n+2) .card-number { background: var(--accent-2); }
 .question-card:nth-child(6n+3) .card-number { background: var(--accent-3); }
@@ -111,97 +135,12 @@ main {
 .question-card:nth-child(6n+6) .card-number { background: var(--accent-6); }
 
 .card-topic {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text);
-  
-  /* 1. Force the gap */
-  margin-right: 12px; 
-  flex: 1; /* Take up remaining space... */
-  
-  /* 2. Safety logic for long titles */
-  white-space: nowrap;      /* Don't wrap to a new line */
-  overflow: hidden;         /* Hide text that sticks out */
-  text-overflow: ellipsis;  /* Add "..." if it's too long */
-  
-  /* Optional: Ensure it starts cleanly */
-  min-width: 0; 
+  font-weight: 600; font-size: 0.9rem; color: var(--text);
+  flex: 1; text-align: left; /* Keep topic left aligned for readability */
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* Fixed Zoom Buttons */
 .card-actions { display: flex; gap: 4px; align-items: center; }
-.zoom-controls { display: flex; gap: 2px; margin-right: 6px; padding-right: 6px; border-right: 1px solid var(--border); }
-.zoom-btn {
-  width: 28px;
-  height: 28px;
-  
-  /* Reset defaults */
-  padding: 0;
-  margin: 0;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--text-muted);
-  
-  /* Flexbox Centering (Perfect for Icons) */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  /* Kill the bumpy selection outline */
-  outline: none;
-  transition: all 0.2s ease;
-}
-
-/* Optional: Add a subtle color change when you click/focus instead of the bump */
-.zoom-btn:hover {
-  background: var(--accent-1);
-  color: white;
-  border-color: var(--accent-1);
-}
-
-.zoom-btn:focus {
-  border-color: var(--accent-1); /* Clean border change instead of bumpy ring */
-}
-
-/* Ensure the icon itself behaves */
-.zoom-btn svg {
-  display: block; /* Removes any tiny inline spacing gaps */
-}
-
-.zoom-btn:hover { background: var(--accent-1); color: white; border-color: var(--accent-1); }
-
-.card-btn {
-  width: 28px;
-  height: 28px;
-  
-  /* Reset defaults */
-  padding: 0;
-  margin: 0;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--text-muted); /* This makes them visible (grey) */
-  
-  /* Center the icon */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  transition: all 0.2s ease;
-}
-
-.card-btn:hover {
-  background: var(--border);
-  color: var(--text); /* Darker on hover */
-}
-
-.card-btn svg {
-  display: block;
-}
-.card-btn:hover { background: var(--border); color: var(--text); }
 
 /* Content Area */
 .card-content {
@@ -210,7 +149,6 @@ main {
 }
 .question-text { width: 100%; text-align: center; }
 
-/* Math Container */
 .math-content {
   display: flex; justify-content: center; align-items: center;
   width: 100%; line-height: 1.4;
