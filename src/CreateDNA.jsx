@@ -90,7 +90,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
     }
   }
 
-  if (loading && availableTopics.length === 0) return <div style={{padding: 40}}>Loading Topics...</div>;
+  if (loading && availableTopics.length === 0) return <div style={{padding: 40, textAlign: 'center'}}>Loading Topics...</div>;
 
   return (
     <div className="create-dna-container">
@@ -128,8 +128,22 @@ export default function CreateDNA({ onGenerate, onCancel }) {
       </div>
 
       <style>{`
-        .create-dna-container { padding: 40px; display: flex; justify-content: center; }
-        .create-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        .create-dna-container { 
+          padding: 20px; 
+          display: flex; 
+          justify-content: center; 
+          align-items: center; 
+          min-height: 80vh; /* This ensures vertical centering */
+        }
+        .create-card { 
+          background: white; 
+          padding: 40px; 
+          border-radius: 16px; 
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+          width: 100%; 
+          max-width: 600px;
+          text-align: center; /* Center text inside the card */
+        }
         h2 { margin-top: 0; color: #2c3e50; }
         .selection-list { margin: 30px 0; display: flex; flex-direction: column; gap: 10px; }
         .selection-row { display: flex; gap: 10px; align-items: center; }
