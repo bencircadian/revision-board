@@ -8,19 +8,13 @@ export default function CreateDna({ onGenerate, onCancel }) {
   ]);
   const [loading, setLoading] = useState(true);
 
-  // 1. Fetch all available topics from the DB so the dropdown is real
+  // 1. Fetch topics
   useEffect(() => {
     async function fetchTopics() {
-      // We fetch all questions just to get the unique topics
-      // (In a larger app, you'd have a separate 'topics' table)
       const { data } = await supabase.from('questions').select('topic');
-      
       if (data) {
-        // Filter for unique topics only
         const uniqueTopics = [...new Set(data.map(d => d.topic))].sort();
         setAvailableTopics(uniqueTopics);
-        
-        // Set default topic for the first dropdown
         if (uniqueTopics.length > 0) {
           setSelections([{ id: 1, topic: uniqueTopics[0], difficulty: 'Medium' }]);
         }
@@ -30,8 +24,7 @@ export default function CreateDna({ onGenerate, onCancel }) {
     fetchTopics();
   }, []);
 
-  // --- Handlers ---
-
+  // 2. Handlers
   const addRow = () => {
     if (selections.length < 6) {
       setSelections([
@@ -55,17 +48,13 @@ export default function CreateDna({ onGenerate, onCancel }) {
     setLoading(true);
     let generatedCards = [];
 
-    // 2. For each row, fetch a random question matching the criteria
     for (const selection of selections) {
       const { data } = await supabase
         .from('questions')
         .select('*')
-        .eq('topic', selection.topic)
-        // If your DB has a difficulty column, uncomment this:
-        // .eq('difficulty', selection.difficulty); 
+        .eq('topic', selection.topic);
       
       if (data && data.length > 0) {
-        // Pick one random question from the matching set
         const randomQ = data[Math.floor(Math.random() * data.length)];
         generatedCards.push({
           ...randomQ,
@@ -76,7 +65,6 @@ export default function CreateDna({ onGenerate, onCancel }) {
           isReview: false
         });
       } else {
-        // Fallback if no question exists for that topic
         generatedCards.push({
           id: `fallback-${Math.random()}`,
           topic: selection.topic,
@@ -88,12 +76,10 @@ export default function CreateDna({ onGenerate, onCancel }) {
         });
       }
     }
-
     setLoading(false);
     onGenerate(generatedCards);
   };
 
-  // Helper to run the generator code immediately
   function runGenerator(code) {
     if (!code) return { q: "Error", a: "..." };
     try {
@@ -104,7 +90,7 @@ export default function CreateDna({ onGenerate, onCancel }) {
     }
   }
 
-  if (loading && availableTopics.length === 0) return <div className="p-10">Loading Topics...</div>;
+  if (loading && availableTopics.length === 0) return <div style={{padding: 40}}>Loading Topics...</div>;
 
   return (
     <div className="create-dna-container">
@@ -116,23 +102,14 @@ export default function CreateDna({ onGenerate, onCancel }) {
           {selections.map((row, index) => (
             <div key={row.id} className="selection-row">
               <span className="row-num">{index + 1}</span>
-              
-              <select 
-                value={row.topic} 
-                onChange={(e) => updateRow(row.id, 'topic', e.target.value)}
-              >
+              <select value={row.topic} onChange={(e) => updateRow(row.id, 'topic', e.target.value)}>
                 {availableTopics.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
-
-              <select 
-                value={row.difficulty}
-                onChange={(e) => updateRow(row.id, 'difficulty', e.target.value)}
-              >
+              <select value={row.difficulty} onChange={(e) => updateRow(row.id, 'difficulty', e.target.value)}>
                 <option>Easy</option>
                 <option>Medium</option>
                 <option>Hard</option>
               </select>
-
               <button className="btn-remove" onClick={() => removeRow(row.id)}>×</button>
             </div>
           ))}
@@ -151,36 +128,19 @@ export default function CreateDna({ onGenerate, onCancel }) {
       </div>
 
       <style>{`
-        .create-dna-container {
-          padding: 40px; display: flex; justify-content: center;
-        }
-        .create-card {
-          background: white; padding: 40px; border-radius: 16px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 600px;
-        }
+        .create-dna-container { padding: 40px; display: flex; justify-content: center; }
+        .create-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
         h2 { margin-top: 0; color: #2c3e50; }
         .selection-list { margin: 30px 0; display: flex; flex-direction: column; gap: 10px; }
         .selection-row { display: flex; gap: 10px; align-items: center; }
         .row-num { font-weight: bold; color: #ccc; width: 20px; }
-        select { 
-          flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; 
-        }
-        .btn-remove { 
-          background: #ffecec; color: #c0392b; border: none; width: 40px; height: 40px; 
-          border-radius: 8px; cursor: pointer; font-size: 1.2rem;
-        }
-        .btn-add-row {
-          width: 100%; padding: 12px; background: #f4f7f6; border: 2px dashed #bdc3c7;
-          color: #7f8c8d; border-radius: 8px; font-weight: bold; cursor: pointer;
-        }
+        select { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
+        .btn-remove { background: #ffecec; color: #c0392b; border: none; width: 40px; height: 40px; border-radius: 8px; cursor: pointer; font-size: 1.2rem; }
+        .btn-add-row { width: 100%; padding: 12px; background: #f4f7f6; border: 2px dashed #bdc3c7; color: #7f8c8d; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .btn-add-row:hover { background: #ecf0f1; border-color: #95a5a6; }
-        
         .create-actions { margin-top: 30px; display: flex; justify-content: space-between; }
         .btn-cancel { background: transparent; border: none; color: #7f8c8d; cursor: pointer; font-size: 1rem; }
-        .btn-generate { 
-          background: #2c3e50; color: white; padding: 12px 30px; border-radius: 8px; 
-          border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer; 
-        }
+        .btn-generate { background: #2c3e50; color: white; padding: 12px 30px; border-radius: 8px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
         .btn-generate:hover { background: #34495e; }
       `}</style>
     </div>
