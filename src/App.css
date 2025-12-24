@@ -1,4 +1,4 @@
-/* src/App.css - Clean & Modern */
+/* src/App.css - Refined Reveal & Spacing */
 :root {
   --bg: #faf9f7;
   --bg-card: #ffffff;
@@ -16,7 +16,7 @@ header {
   background: var(--bg-card);
   border-bottom: 1px solid var(--border);
   display: flex;
-  flex-direction: column; /* Stack them on small screens */
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 15px;
@@ -126,16 +126,16 @@ main {
 
 .rated-badge { color: #27ae60; font-weight: bold; margin-left: 5px; }
 
-/* --- CARD CONTENT (NEW LAYOUT) --- */
+/* --- CARD CONTENT (Adjusted for Readability) --- */
 .card-content {
   flex: 1; display: flex; align-items: center; justify-content: center;
   padding: 20px; position: relative; text-align: center;
   transition: all 0.3s;
 }
 
-/* Fade out the question when revealed */
+/* 1. Changed Opacity to 50% so you can read the question */
 .card-content.revealed-mode .question-text {
-  opacity: 0.2; /* 20% opacity */
+  opacity: 0.5; 
 }
 
 .question-text { font-size: 1.4rem; font-weight: 500; color: var(--text); width: 100%; transition: opacity 0.3s; }
@@ -143,11 +143,14 @@ main {
 .answer-overlay {
   position: absolute; 
   inset: 0; 
-  background: transparent; /* See-through! */
+  background: transparent;
   display: flex; 
-  align-items: flex-end; /* Bottom alignment */
+  align-items: flex-end; /* Align to bottom */
   justify-content: center;
-  padding-bottom: 30px; /* Offset from bottom */
+  
+  /* 2. Reduced padding to 5px to sit right on the edge */
+  padding-bottom: 5px; 
+  
   opacity: 0; 
   pointer-events: none; 
   transition: 0.3s;
@@ -157,12 +160,12 @@ main {
 .answer-overlay-text { 
   font-size: 2rem; 
   font-weight: 800; 
-  color: #27ae60; /* Bright Green */
-  background: rgba(255,255,255,0.9); /* Slight background to make it readable over faded question */
-  padding: 10px 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  margin-bottom: 10px;
+  color: #27ae60; /* Green Answer */
+  background: rgba(255,255,255,0.95); /* Stronger background for contrast */
+  padding: 8px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  margin-bottom: 0; /* Remove margin so it sits flush */
 }
 
 /* --- CARD FOOTER --- */
@@ -182,12 +185,12 @@ main {
 .perf-buttons { display: flex; gap: 6px; }
 
 .perf-btn {
-  padding: 6px 8px; /* Compact padding for text */
+  padding: 6px 8px;
   background: white;
   border: 1px solid #ccc;
   border-radius: 6px;
-  font-weight: 700; /* Bold text */
-  font-size: 0.7rem; /* Smaller text size */
+  font-weight: 700;
+  font-size: 0.7rem;
   cursor: pointer;
   color: #7f8c8d;
   display: flex; align-items: center; justify-content: center;
@@ -199,11 +202,11 @@ main {
 
 .perf-btn.active { opacity: 1; background: white; border-width: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
-/* Specific Text Colors for Active State */
-.perf-btn.btn-100.active  { color: #27ae60; border-color: #27ae60; } /* 100% */
-.perf-btn.btn-most.active { color: #3498db; border-color: #3498db; } /* MOST */
-.perf-btn.btn-some.active { color: #e67e22; border-color: #e67e22; } /* SOME */
-.perf-btn.btn-nope.active { color: #c0392b; border-color: #c0392b; } /* NOPE! */
+/* Specific Text Colors */
+.perf-btn.btn-100.active  { color: #27ae60; border-color: #27ae60; }
+.perf-btn.btn-most.active { color: #3498db; border-color: #3498db; }
+.perf-btn.btn-some.active { color: #e67e22; border-color: #e67e22; }
+.perf-btn.btn-nope.active { color: #c0392b; border-color: #c0392b; }
 
 /* Media Queries */
 @media (max-width: 1000px) {
