@@ -116,12 +116,36 @@ main {
 .card-actions { display: flex; gap: 4px; align-items: center; }
 .zoom-controls { display: flex; gap: 2px; margin-right: 6px; padding-right: 6px; border-right: 1px solid var(--border); }
 .zoom-btn {
-  width: 28px; height: 28px; 
-  border: 1px solid var(--border); background: var(--bg-card);
-  border-radius: 6px; cursor: pointer; 
-  font-weight: 600; color: var(--text-muted);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.2rem; padding-bottom: 3px; /* Visual tweak to center the minus sign */
+  width: 28px;
+  height: 28px;
+  
+  /* 1. Reset browser defaults to kill the "bump" */
+  padding: 0;
+  margin: 0;
+  outline: none; /* Removes the default focus ring */
+  
+  /* 2. Style the box */
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  
+  /* 3. Perfect Centering (Flexbox) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* 4. Font tweaks for the symbols */
+  font-family: system-ui, sans-serif; /* Neutral font aligns symbols better than Inter */
+  font-size: 1.2rem;
+  line-height: 1;
+  font-weight: 400;
+}
+
+/* Optional: Add a subtle border change when clicked instead of the bumpy outline */
+.zoom-btn:active {
+  background: var(--border);
 }
 .zoom-btn:hover { background: var(--accent-1); color: white; border-color: var(--accent-1); }
 
