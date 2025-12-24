@@ -110,7 +110,23 @@ main {
 .question-card:nth-child(6n+5) .card-number { background: var(--accent-5); }
 .question-card:nth-child(6n+6) .card-number { background: var(--accent-6); }
 
-.card-topic { font-weight: 600; font-size: 0.9rem; flex: 1; color: var(--text); }
+.card-topic {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+  
+  /* 1. Force the gap */
+  margin-right: 12px; 
+  flex: 1; /* Take up remaining space... */
+  
+  /* 2. Safety logic for long titles */
+  white-space: nowrap;      /* Don't wrap to a new line */
+  overflow: hidden;         /* Hide text that sticks out */
+  text-overflow: ellipsis;  /* Add "..." if it's too long */
+  
+  /* Optional: Ensure it starts cleanly */
+  min-width: 0; 
+}
 
 /* Fixed Zoom Buttons */
 .card-actions { display: flex; gap: 4px; align-items: center; }
