@@ -11,7 +11,6 @@ function App() {
   }, [])
 
   async function fetchQuestions() {
-    // This asks Supabase for all rows in the 'questions' table
     const { data, error } = await supabase
       .from('questions')
       .select('*')
@@ -19,7 +18,22 @@ function App() {
     if (error) {
       console.error('Error fetching questions:', error)
     } else {
-      setQuestions(data)
+      // We found the questions! Now let's try to RUN the generators
+      const processedQuestions = data.map(q => {
+        // If there is no code, just return the placeholder
+        if (!q.generator_code) return { ...q, generated: null };
+
+        try {
+          // This creates a function from the string in your database and runs it
+          const generator = new Function(q.generator_code);
+          const result = generator();
+          return { ...q, generated: result }; // Attach the real question/answer
+        } catch (err) {
+          console.error("Generator failed for:", q.skill_name, err);
+          return { ...q, generated: { q: "Error generating", a: "Error" } };
+        }
+      });
+      setQuestions(processedQuestions)
     }
     setLoading(false)
   }
@@ -28,16 +42,23 @@ function App() {
 
   return (
     <div className="board-container">
-      <h1>Revision Board Database Test</h1>
-      <p>We found {questions.length} questions in your database.</p>
+      <h1>Revision Board Live Test</h1>
       
       <div className="card-grid">
         {questions.map((q) => (
           <div key={q.id} className="question-card">
-            <h3>{q.domain}</h3>
-            <h4>{q.topic}</h4>
-            <p>{q.skill_name}</p>
             <span className="badge">{q.difficulty}</span>
+            <h3>{q.topic}</h3>
+            
+            {/* If we have a generated question, show it! Otherwise show the skill name */}
+            {q.generated ? (
+              <div className="generated-content">
+                <p className="math-question">{q.generated.q}</p>
+                <p className="math-answer">Answer: {q.generated.a}</p>
+              </div>
+            ) : (
+              <p className="placeholder-text">{q.skill_name} (No generator yet)</p>
+            )}
           </div>
         ))}
       </div>
