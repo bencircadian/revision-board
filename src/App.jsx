@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
-import CreateDna from './CreateDna' // Import the new component
+import CreateDna from './CreateDna' // This imports your new component
 import './App.css'
 
 // --- Helper: Math Display ---
@@ -25,19 +25,18 @@ const MathDisplay = ({ text, fontSize }) => {
 };
 
 function App() {
+  // --- STATE ---
   const [view, setView] = useState('dashboard'); // 'dashboard' or 'create'
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dateStr, setDateStr] = useState("");
-  
-  // Track ratings
   const [ratings, setRatings] = useState({});
   const [showSaveModal, setShowSaveModal] = useState(false);
 
   useEffect(() => {
     const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
     setDateStr(new Date().toLocaleDateString('en-GB', options));
-    fetchAndInitCards(); // Load default spaced repetition on start
+    fetchAndInitCards(); 
   }, []);
 
   // --- DATA FETCHING ---
