@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabase';
 
-export default function CreateDna({ onGenerate, onCancel }) {
+export default function CreateDNA({ onGenerate, onCancel }) {
   const [availableTopics, setAvailableTopics] = useState([]);
   const [selections, setSelections] = useState([
     { id: 1, topic: '', difficulty: 'Medium' }
