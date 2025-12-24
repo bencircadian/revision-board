@@ -119,34 +119,41 @@ main {
   width: 28px;
   height: 28px;
   
-  /* 1. Reset browser defaults to kill the "bump" */
+  /* Reset defaults */
   padding: 0;
   margin: 0;
-  outline: none; /* Removes the default focus ring */
-  
-  /* 2. Style the box */
-  border: 1px solid var(--border);
   background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 6px;
   cursor: pointer;
   color: var(--text-muted);
   
-  /* 3. Perfect Centering (Flexbox) */
+  /* Flexbox Centering (Perfect for Icons) */
   display: flex;
   align-items: center;
   justify-content: center;
   
-  /* 4. Font tweaks for the symbols */
-  font-family: system-ui, sans-serif; /* Neutral font aligns symbols better than Inter */
-  font-size: 1.2rem;
-  line-height: 1;
-  font-weight: 400;
+  /* Kill the bumpy selection outline */
+  outline: none;
+  transition: all 0.2s ease;
 }
 
-/* Optional: Add a subtle border change when clicked instead of the bumpy outline */
-.zoom-btn:active {
-  background: var(--border);
+/* Optional: Add a subtle color change when you click/focus instead of the bump */
+.zoom-btn:hover {
+  background: var(--accent-1);
+  color: white;
+  border-color: var(--accent-1);
 }
+
+.zoom-btn:focus {
+  border-color: var(--accent-1); /* Clean border change instead of bumpy ring */
+}
+
+/* Ensure the icon itself behaves */
+.zoom-btn svg {
+  display: block; /* Removes any tiny inline spacing gaps */
+}
+
 .zoom-btn:hover { background: var(--accent-1); color: white; border-color: var(--accent-1); }
 
 .card-btn {
