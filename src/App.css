@@ -237,10 +237,6 @@ main {
 }
 .reveal-btn:hover { background: var(--text); color: var(--bg-card); border-color: var(--text); }
 
-.stars-container { display: flex; gap: 2px; }
-.star-icon { width: 16px; height: 16px; fill: #e5e5e5; }
-.star-icon.filled { fill: #f59e0b; }
-
 @media print {
   header, .title-bar, .card-actions, .reveal-btn { display: none !important; }
   .questions-grid { grid-template-columns: 1fr 1fr; gap: 20px; }
