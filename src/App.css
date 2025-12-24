@@ -1,4 +1,4 @@
-/* src/App.css - Fully Centered */
+/* src/App.css - Clean & Modern */
 :root {
   --bg: #faf9f7;
   --bg-card: #ffffff;
@@ -16,14 +16,12 @@ header {
   background: var(--bg-card);
   border-bottom: 1px solid var(--border);
   display: flex;
-  flex-direction: column; /* Stack them to center them */
+  flex-direction: column; /* Stack them on small screens */
   align-items: center;
   justify-content: center;
   gap: 15px;
 }
 
-/* Responsive: Side by side on larger screens if preferred, 
-   but for "Centered" look, stacking is safer */
 @media (min-width: 800px) {
   header { flex-direction: row; justify-content: space-between; }
 }
@@ -50,12 +48,12 @@ header {
 
 /* --- MAIN LAYOUT --- */
 main {
-  max-width: 1200px;
+  max-width: 1300px; /* Increased width */
   margin: 0 auto;
   padding: 40px 20px;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center the grid container */
+  align-items: center;
 }
 
 /* Title Bar */
@@ -82,43 +80,83 @@ main {
 .question-card {
   background: white; border-radius: 12px; box-shadow: var(--shadow);
   display: flex; flex-direction: column; min-height: 300px;
-  text-align: center; /* Crucial: Centers text inside card */
   transition: transform 0.2s;
+  overflow: hidden; /* Keeps buttons inside rounded corners */
 }
-.question-card:hover { transform: translateY(-5px); }
+.question-card:hover { transform: translateY(-3px); }
 
+/* --- CARD HEADER (BUTTONS FIX) --- */
 .card-header {
-  padding: 15px; border-bottom: 1px solid #eee;
-  display: flex; align-items: center; justify-content: center; /* Center header content */
-  position: relative;
+  padding: 10px 15px; border-bottom: 1px solid #eee;
+  display: flex; align-items: center; justify-content: space-between;
+  background: #fdfdfd;
 }
-.card-number {
-  background: var(--accent-1); color: white; width: 30px; height: 30px;
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  font-weight: bold; position: absolute; left: 15px;
-}
-.card-topic { font-weight: 600; color: #555; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
-.card-actions { position: absolute; right: 15px; }
 
+.card-number {
+  background: var(--accent-1); color: white; width: 24px; height: 24px;
+  border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  font-weight: bold; font-size: 0.8rem; margin-right: 10px;
+}
+
+.card-topic { 
+  font-weight: 700; color: #444; font-size: 0.9rem; 
+  text-transform: uppercase; letter-spacing: 0.5px;
+  flex: 1; text-align: left;
+}
+
+/* Action Buttons Container */
+.card-actions { 
+  display: flex; align-items: center; gap: 5px; 
+}
+
+/* Zoom Controls Group */
+.zoom-controls {
+  display: flex; gap: 2px; margin-right: 8px; padding-right: 8px;
+  border-right: 1px solid #ddd;
+}
+
+/* The actual small buttons */
+.zoom-btn, .card-btn {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; border-radius: 6px;
+  background: transparent; color: #7f8c8d;
+  cursor: pointer; font-size: 1rem; transition: all 0.2s;
+}
+
+.zoom-btn:hover, .card-btn:hover {
+  background: #ecf0f1; color: var(--accent-2); border-color: #bdc3c7;
+}
+
+.rated-badge { color: #27ae60; font-weight: bold; margin-left: 5px; }
+
+/* --- CARD CONTENT --- */
 .card-content {
   flex: 1; display: flex; align-items: center; justify-content: center;
-  padding: 20px; position: relative;
+  padding: 20px; position: relative; text-align: center;
 }
-.question-text { font-size: 1.4rem; font-weight: 500; color: var(--text); }
+.question-text { font-size: 1.4rem; font-weight: 500; color: var(--text); width: 100%; }
 
 .answer-overlay {
-  position: absolute; inset: 0; background: rgba(255,255,255,0.96);
+  position: absolute; inset: 0; background: rgba(255,255,255,0.98);
   display: flex; align-items: center; justify-content: center;
   opacity: 0; pointer-events: none; transition: 0.2s;
 }
 .answer-overlay.visible { opacity: 1; pointer-events: auto; }
 .answer-overlay-text { font-size: 1.8rem; font-weight: bold; color: var(--accent-2); }
 
+/* --- CARD FOOTER --- */
 .card-footer {
-  padding: 15px; border-top: 1px solid #eee;
-  display: flex; align-items: center; justify-content: center; /* Center footer buttons */
-  gap: 15px; background: #fafafa;
+  padding: 12px 15px; border-top: 1px solid #eee;
+  display: flex; align-items: center; justify-content: space-between;
+  background: #fafafa;
 }
+
+.reveal-btn {
+  padding: 6px 12px; background: white; border: 1px solid #ccc;
+  border-radius: 6px; font-weight: 600; cursor: pointer; color: #555;
+}
+.reveal-btn:hover { background: var(--text); color: white; border-color: var(--text); }
 
 /* Media Queries */
 @media (max-width: 1000px) {
