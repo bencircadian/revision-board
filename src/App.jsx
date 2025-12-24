@@ -38,16 +38,15 @@ function App() {
     fetchAndInitCards();
   }, []);
 
-async function fetchAndInitCards() {
-    const CLASS_ID = "Year 10 - Set 2"; // TODO: Make dynamic later
+  async function fetchAndInitCards() {
+    const CLASS_ID = "Year 10 - Set 2"; 
 
-    // 1. Fetch "DUE" cards from Spaced Repetition (The SQL function we just wrote)
+    // 1. Fetch "DUE" cards from Spaced Repetition
     const { data: dueCards, error: rpcError } = await supabase
       .rpc('get_due_cards', { p_class_id: CLASS_ID });
 
     if (rpcError) console.error("SRS Error:", rpcError);
     
-    // Ensure we have an array (even if empty)
     const reviewQuestions = dueCards || [];
     console.log(`Found ${reviewQuestions.length} cards due for review.`);
 
@@ -59,13 +58,12 @@ async function fetchAndInitCards() {
       // 3. Fetch random NEW questions from database
       const { data: dbData } = await supabase.from('questions').select('*');
       
-      // Shuffle and pick 'slotsRemaining' amount
       if (dbData) {
         const shuffled = dbData.sort(() => 0.5 - Math.random());
         newQuestions = shuffled.slice(0, slotsRemaining);
       }
       
-      // If DB is empty, use placeholders (Safe Fallback)
+      // Fallback Placeholders if DB is empty
       if (newQuestions.length < slotsRemaining) {
         const placeholders = [
            { topic: 'Algebra', generator_code: `return { q: "Solve $2x=10$", a: "$x=5$" }` },
@@ -73,25 +71,21 @@ async function fetchAndInitCards() {
            { topic: 'Number', generator_code: `return { q: "Calc $10-3$", a: "$7$" }` },
            { topic: 'Ratio', generator_code: `return { q: "Share 10 in 2:3", a: "$4:6$" }` }
         ];
-        // Fill the rest
         const needed = slotsRemaining - newQuestions.length;
         for(let i=0; i<needed; i++) newQuestions.push(placeholders[i % placeholders.length]);
       }
     }
 
     // 4. Combine Review + New
-    // Review cards don't have generator_code, they have explicit text.
-    // New cards need to be generated.
-    
     const finalBoard = [
       ...reviewQuestions.map(q => ({
         ...q,
-        id: `review-${Math.random()}`, // Unique ID
-        currentQ: q.question_text,     // Text is already saved
+        id: `review-${Math.random()}`, 
+        currentQ: q.question_text,     
         currentA: q.answer_text,
         revealed: false,
         fontSize: 1.4,
-        isReview: true                 // Flag to show it's a review card
+        isReview: true                 
       })),
       ...newQuestions.map(q => {
         const generated = runGenerator(q.generator_code);
@@ -106,7 +100,6 @@ async function fetchAndInitCards() {
       })
     ];
 
-    // Optional: Shuffle the board so Review cards aren't always first
     setCards(finalBoard.sort(() => 0.5 - Math.random()));
     setLoading(false);
   }
@@ -133,15 +126,13 @@ async function fetchAndInitCards() {
     const newRatings = { ...ratings, [index]: score };
     setRatings(newRatings);
 
-    // Check if all 6 are done
     if (Object.keys(newRatings).length === 6) {
-      setTimeout(() => setShowSaveModal(true), 500); // Small delay for UX
+      setTimeout(() => setShowSaveModal(true), 500); 
     }
   };
 
   const saveSession = async () => {
-    
-    // --- NEW: Helper to calculate Lesson Intervals ---
+    // Helper to calculate Lesson Intervals
     const getLessonInterval = (score) => {
       switch (score) {
         case 0:   return 1;   // Red: Next lesson
@@ -151,23 +142,18 @@ async function fetchAndInitCards() {
         default:  return 1;
       }
     };
-    // -------------------------------------------------
 
-    // 1. Construct the Payload
     const sessionData = {
       date: new Date().toISOString(),
       class_id: "Year 10 - Set 2", 
       results: cards.map((card, index) => {
         const score = ratings[index] || 0;
-        
         return {
           question_id: card.id,
           topic: card.topic,
           question_text: card.currentQ, 
           answer_text: card.currentA,
           score: score,
-          
-          // We save the "Next Review Gap" here
           review_interval: getLessonInterval(score) 
         };
       })
@@ -175,7 +161,6 @@ async function fetchAndInitCards() {
 
     console.log("Saving Lesson Data:", sessionData);
 
-    // 2. Send to Supabase
     const { error } = await supabase.from('dna_sessions').insert([sessionData]);
     
     if (error) {
@@ -186,12 +171,9 @@ async function fetchAndInitCards() {
 
     setShowSaveModal(false);
   };
-    // Optional: Reset ratings or cards here if you want
-  };
 
   // --- RENDER HELPERS ---
 
-  // Replaces the stars. Only shows when revealed.
   const renderPerformanceButtons = (index) => {
     if (!cards[index].revealed) return <div style={{color: '#ccc', fontSize: '0.9rem'}}>Reveal to grade</div>;
 
@@ -245,11 +227,11 @@ async function fetchAndInitCards() {
             <div key={card.id || index} className="question-card">
               <div className="card-header">
                 <div className="card-number">{index + 1}</div>
-                  <span className="card-topic">
-                    {card.isReview ? "↺ " : ""}{card.topic}
-                  </span>
+                <span className="card-topic">
+                  {/* The review indicator you asked for: */}
+                  {card.isReview ? "↺ " : ""}{card.topic}
+                </span>
                 <div className="card-actions">
-                  {/* Visual feedback if rated */}
                   {ratings[index] !== undefined && <span className="rated-badge">✓</span>}
                 </div>
               </div>
@@ -267,10 +249,7 @@ async function fetchAndInitCards() {
               </div>
 
               <div className="card-footer" style={{ justifyContent: 'space-between' }}>
-                {/* 1. Performance Buttons (Left) */}
                 {renderPerformanceButtons(index)}
-
-                {/* 2. Reveal Toggle (Right) */}
                 <button className="reveal-btn" onClick={() => toggleReveal(index)}>
                   {card.revealed ? 'Hide' : 'Reveal'}
                 </button>
@@ -306,7 +285,6 @@ async function fetchAndInitCards() {
         </div>
       )}
 
-      {/* --- INLINE STYLES FOR NEW ELEMENTS --- */}
       <style>{`
         .perf-buttons { display: flex; gap: 5px; }
         .perf-btn {
