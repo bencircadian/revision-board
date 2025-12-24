@@ -157,9 +157,33 @@ main {
 .zoom-btn:hover { background: var(--accent-1); color: white; border-color: var(--accent-1); }
 
 .card-btn {
-  width: 32px; height: 32px; border: none; background: transparent;
-  border-radius: 6px; cursor: pointer; display: flex; align-items: center;
-  justify-content: center; color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  
+  /* Reset defaults */
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted); /* This makes them visible (grey) */
+  
+  /* Center the icon */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  transition: all 0.2s ease;
+}
+
+.card-btn:hover {
+  background: var(--border);
+  color: var(--text); /* Darker on hover */
+}
+
+.card-btn svg {
+  display: block;
 }
 .card-btn:hover { background: var(--border); color: var(--text); }
 
