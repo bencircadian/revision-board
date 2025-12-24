@@ -215,3 +215,107 @@ main {
 @media (max-width: 600px) {
   .questions-grid { grid-template-columns: 1fr; }
 }
+
+/* --- MODAL POPUP --- */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Dimmed background */
+  backdrop-filter: blur(4px);      /* Blur effect */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000; /* Sit on top of everything */
+}
+
+.modal-box {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy entrance */
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-box h3 {
+  margin-top: 0;
+  color: #2c3e50;
+  font-size: 1.6rem;
+}
+
+.modal-box p {
+  color: #7f8c8d;
+  margin-bottom: 25px;
+}
+
+.modal-stats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin: 20px 0 30px 0;
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid #eee;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat strong {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #95a5a6;
+  margin-bottom: 5px;
+}
+
+.stat span {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.btn-cancel {
+  padding: 12px 24px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #7f8c8d;
+  font-size: 1rem;
+}
+.btn-cancel:hover { background: #f1f1f1; }
+
+.btn-confirm {
+  padding: 12px 24px;
+  background: #2c3e50;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: white;
+  font-size: 1rem;
+  box-shadow: 0 4px 10px rgba(44, 62, 80, 0.3);
+}
+.btn-confirm:hover { background: #34495e; transform: translateY(-1px); }
