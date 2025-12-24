@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
-import CreateDNA from './CreateDNA'
+import CreateDNA from './CreateDNA' // matches the filename exactly
 import './App.css'
 
 // --- Helper: Math Display ---
@@ -39,16 +39,16 @@ function App() {
     setDateStr(new Date().toLocaleDateString('en-GB', options));
   }, []);
 
-  // --- ACTIONS ---
+  // --- NAVIGATION ACTIONS ---
 
   const goToDashboard = () => {
     setView('dashboard');
-    fetchAndInitCards(); // Only fetch when entering dashboard
+    fetchAndInitCards(); // Load the spaced repetition cards
   };
 
   const goToCreate = () => {
     setView('create');
-    setCards([]); // Clear any previous cards
+    setCards([]); // Clear cards so we start fresh
   };
 
   const goHome = () => {
@@ -124,7 +124,7 @@ function App() {
   const handleCustomGeneration = (newCards) => {
     setCards(newCards);
     setRatings({}); 
-    setView('dashboard'); 
+    setView('dashboard'); // Show the grid with the custom cards
   };
 
   function runGenerator(code) {
@@ -186,7 +186,7 @@ function App() {
     else alert("Session Saved!");
     
     setShowSaveModal(false);
-    goHome(); // Return to home after saving
+    goHome(); 
   };
 
   const renderPerformanceButtons = (index) => {
@@ -204,7 +204,7 @@ function App() {
 
   // --- RENDER VIEWS ---
 
-  // 1. HOME SCREEN VIEW
+  // 1. HOME SCREEN (The Two Big Buttons)
   if (view === 'home') {
     return (
       <div className="home-container">
@@ -232,14 +232,15 @@ function App() {
           </button>
         </div>
 
+        {/* Home Styles */}
         <style>{`
-          .home-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #faf9f7; }
+          .home-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #faf9f7; padding: 20px; }
           .home-header { text-align: center; margin-bottom: 50px; }
           .logo-large { font-size: 3rem; font-weight: 800; color: white; background: #2c3e50; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
           .home-header h1 { color: #2c3e50; margin: 0; font-size: 2.5rem; }
           .home-header p { color: #7f8c8d; margin-top: 10px; font-size: 1.2rem; }
           
-          .home-actions { display: flex; gap: 30px; }
+          .home-actions { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
           .big-btn { display: flex; align-items: center; gap: 20px; padding: 30px; width: 320px; border: none; border-radius: 16px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: left; }
           .big-btn:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
           
@@ -258,9 +259,10 @@ function App() {
     );
   }
 
-  // 2. CREATE VIEW
+  // 2. CREATE VIEW (Fixed Typo Here)
   if (view === 'create') {
-    return <CreateDna onGenerate={handleCustomGeneration} onCancel={goHome} />;
+    // Note: Component name must match import name exactly
+    return <CreateDNA onGenerate={handleCustomGeneration} onCancel={goHome} />;
   }
 
   // 3. DASHBOARD VIEW (Grid)
@@ -322,6 +324,7 @@ function App() {
         </div>
       </main>
 
+      {/* MODAL */}
       {showSaveModal && (
         <div className="modal-backdrop">
           <div className="modal-box">
@@ -339,7 +342,7 @@ function App() {
         </div>
       )}
 
-      {/* RE-USING STYLES FROM BEFORE */}
+      {/* STYLES */}
       <style>{`
         .perf-buttons { display: flex; gap: 5px; }
         .perf-btn { width: 32px; height: 32px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9f9; cursor: pointer; font-size: 1.1rem; padding: 0; display: flex; align-items: center; justify-content: center; opacity: 0.5; transition: all 0.2s; }
