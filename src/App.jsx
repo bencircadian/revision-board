@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
-import CreateDna from './CreateDNA.jsx' // This imports your new component
+import CreateDNA from './CreateDNA.jsx' // This imports your new component
 import './App.css'
 
 // --- Helper: Math Display ---
@@ -187,7 +187,7 @@ function App() {
 
   // 1. The Switcher Logic
   if (view === 'create') {
-    return <CreateDna onGenerate={handleCustomGeneration} onCancel={() => setView('dashboard')} />;
+    return <CreateDNA onGenerate={handleCustomGeneration} onCancel={() => setView('dashboard')} />;
   }
 
   if (loading) return <div style={{padding: 40}}>Loading Board...</div>;
