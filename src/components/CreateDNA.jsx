@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 
+// Difficulty mapping
+const DIFFICULTIES = {
+  '•': { label: '•', level: 1 },
+  '••': { label: '••', level: 2 },
+  '•••': { label: '•••', level: 3 },
+};
+
 export default function CreateDNA({ onGenerate, onCancel }) {
   const [availableTopics, setAvailableTopics] = useState([]);
-  const [selections, setSelections] = useState([{ id: 1, topic: '', difficulty: 'Medium' }]);
+  const [selections, setSelections] = useState([{ id: 1, topic: '', difficulty: '••' }]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -14,7 +21,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
         const uniqueTopics = [...new Set(data.map(d => d.topic))].sort();
         setAvailableTopics(uniqueTopics);
         if (uniqueTopics.length > 0) {
-          setSelections([{ id: 1, topic: uniqueTopics[0], difficulty: 'Medium' }]);
+          setSelections([{ id: 1, topic: uniqueTopics[0], difficulty: '••' }]);
         }
       }
       setLoading(false);
@@ -28,7 +35,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
 
   const addRow = () => {
     if (selections.length < 6) {
-      setSelections([...selections, { id: Date.now(), topic: availableTopics[0], difficulty: 'Medium' }]);
+      setSelections([...selections, { id: Date.now(), topic: availableTopics[0], difficulty: '••' }]);
     }
   };
 
@@ -126,15 +133,32 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>
-              <select 
-                value={row.difficulty} 
-                onChange={(e) => updateRow(row.id, 'difficulty', e.target.value)}
-                className="diff-select"
-              >
-                <option>Easy</option>
-                <option>Medium</option>
-                <option>Hard</option>
-              </select>
+              <div className="diff-buttons">
+                <button
+                  type="button"
+                  className={`diff-btn ${row.difficulty === '•' ? 'active' : ''}`}
+                  onClick={() => updateRow(row.id, 'difficulty', '•')}
+                  title="Level 1"
+                >
+                  •
+                </button>
+                <button
+                  type="button"
+                  className={`diff-btn ${row.difficulty === '••' ? 'active' : ''}`}
+                  onClick={() => updateRow(row.id, 'difficulty', '••')}
+                  title="Level 2"
+                >
+                  ••
+                </button>
+                <button
+                  type="button"
+                  className={`diff-btn ${row.difficulty === '•••' ? 'active' : ''}`}
+                  onClick={() => updateRow(row.id, 'difficulty', '•••')}
+                  title="Level 3"
+                >
+                  •••
+                </button>
+              </div>
               {selections.length > 1 && (
                 <button className="btn-remove" onClick={() => removeRow(row.id)}>×</button>
               )}
@@ -152,7 +176,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                 className={`topic-chip ${selections.some(s => s.topic === topic) ? 'selected' : ''}`}
                 onClick={() => {
                   if (selections.length < 6 && !selections.some(s => s.topic === topic)) {
-                    setSelections([...selections, { id: Date.now(), topic, difficulty: 'Medium' }]);
+                    setSelections([...selections, { id: Date.now(), topic, difficulty: '••' }]);
                   }
                 }}
                 disabled={selections.length >= 6 || selections.some(s => s.topic === topic)}
@@ -241,7 +265,6 @@ const createDNAStyles = `
     background: #e2e8f0;
   }
 
-  /* Topic Search */
   .topic-search {
     position: relative;
     margin-bottom: 24px;
@@ -268,7 +291,6 @@ const createDNAStyles = `
     box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
   }
 
-  /* Selection List */
   .selection-list {
     display: flex;
     flex-direction: column;
@@ -305,13 +327,36 @@ const createDNAStyles = `
     background: white;
   }
 
-  .diff-select {
-    width: 120px;
-    padding: 12px 16px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 1rem;
+  .diff-buttons {
+    display: flex;
+    gap: 4px;
+  }
+
+  .diff-btn {
+    width: 36px;
+    height: 36px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
     background: white;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: -1px;
+  }
+
+  .diff-btn:hover {
+    border-color: #99f6e4;
+    background: #f0fdfa;
+  }
+
+  .diff-btn.active {
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+    color: white;
+    border-color: transparent;
   }
 
   .btn-remove {
@@ -333,7 +378,6 @@ const createDNAStyles = `
     background: #fee2e2;
   }
 
-  /* Quick Topics */
   .quick-topics {
     margin-bottom: 32px;
   }
@@ -379,7 +423,6 @@ const createDNAStyles = `
     cursor: not-allowed;
   }
 
-  /* Actions */
   .actions {
     display: flex;
     flex-direction: column;
@@ -442,7 +485,6 @@ const createDNAStyles = `
     cursor: not-allowed;
   }
 
-  /* Preview Info */
   .preview-info {
     display: flex;
     justify-content: space-between;
@@ -464,7 +506,6 @@ const createDNAStyles = `
     max-width: 300px;
   }
 
-  /* Responsive */
   @media (max-width: 640px) {
     .create-dna-page {
       padding: 16px;
@@ -483,7 +524,7 @@ const createDNAStyles = `
       order: 1;
     }
 
-    .diff-select {
+    .diff-buttons {
       flex: 1;
       order: 2;
     }
