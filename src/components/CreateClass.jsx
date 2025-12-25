@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+import { Icon } from './Icons';
 
 export default function CreateClass({ onSave, onCancel }) {
   const [className, setClassName] = useState('');
@@ -80,7 +81,7 @@ export default function CreateClass({ onSave, onCancel }) {
     <div className="create-class-page">
       <div className="form-card">
         <header className="card-header">
-          <h1>🎓 Create New Class</h1>
+          <h1><Icon name="hat" size={28} style={{marginRight:'10px'}} /> Create New Class</h1>
           <button className="btn-back" onClick={onCancel}>← Back</button>
         </header>
 
@@ -100,7 +101,7 @@ export default function CreateClass({ onSave, onCancel }) {
         <div className="form-section">
           <label>Search Topics</label>
           <div className="search-box">
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><Icon name="search" size={16} /></span>
             <input
               type="text"
               placeholder="Filter topics..."
@@ -125,7 +126,7 @@ export default function CreateClass({ onSave, onCancel }) {
                 onClick={() => toggleTopic(topic, 'recent')}
               >
                 {topic}
-                {recentTopics.includes(topic) && <span className="check">✓</span>}
+                {recentTopics.includes(topic) && <span className="check"><Icon name="check" size={14} /></span>}
               </button>
             ))}
           </div>
@@ -147,7 +148,7 @@ export default function CreateClass({ onSave, onCancel }) {
                 disabled={recentTopics.includes(topic)}
               >
                 {topic}
-                {pastTopics.includes(topic) && <span className="check">✓</span>}
+                {pastTopics.includes(topic) && <span className="check"><Icon name="check" size={14} /></span>}
               </button>
             ))}
           </div>
