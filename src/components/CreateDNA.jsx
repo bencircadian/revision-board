@@ -170,7 +170,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
           <span className="search-icon"><Icon name="search" size={16} /></span>
           <input
             type="text"
-            placeholder="Search topics..."
+            placeholder="Search to add topics..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -188,7 +188,8 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                     onChange={(e) => updateRow(row.id, 'topic', e.target.value)}
                     className="topic-select"
                   >
-                    {(searchTerm ? filteredTopics : availableTopics).map(t => (
+                    {/* FIXED: Always show all topics so existing selections don't break */}
+                    {availableTopics.map(t => (
                       <option key={t} value={t}>{t}</option>
                     ))}
                   </select>
@@ -241,13 +242,13 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                       <strong>A:</strong> {previews[row.id]?.a || '...'}
                     </div>
                   </div>
-                 <button 
-  className="btn-refresh" 
-  onClick={() => refreshPreview(row.id, row.topic)}
-  title="Show different example"
->
-  <Icon name="refresh" size={14} />
-</button>
+                  <button 
+                    className="btn-refresh" 
+                    onClick={() => refreshPreview(row.id, row.topic)}
+                    title="Show different example"
+                  >
+                    <Icon name="refresh" size={14} />
+                  </button>
                 </div>
               </div>
             ))}
@@ -265,11 +266,14 @@ export default function CreateDNA({ onGenerate, onCancel }) {
           </div>
         </div>
 
-        {/* Quick Add Topics */}
+        {/* Quick Add Topics - NOW FILTERED BY SEARCH */}
         <div className="quick-topics">
-          <span className="label">Quick add:</span>
+          <span className="label">
+            {searchTerm ? `Search Results (${filteredTopics.length}):` : 'Quick add:'}
+          </span>
           <div className="topic-chips">
-            {availableTopics.slice(0, 8).map(topic => (
+            {/* FIXED: Chips now respond to search query */}
+            {(searchTerm ? filteredTopics : availableTopics.slice(0, 8)).map(topic => (
               <button
                 key={topic}
                 className={`topic-chip ${selections.some(s => s.topic === topic) ? 'selected' : ''}`}
@@ -278,6 +282,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                     const newId = Date.now();
                     setSelections([...selections, { id: newId, topic, difficulty: '••' }]);
                     generatePreview(newId, topic);
+                    setSearchTerm(''); // Optional: clear search after adding
                   }
                 }}
                 disabled={selections.length >= 6}
@@ -285,6 +290,9 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                 {topic}
               </button>
             ))}
+            {searchTerm && filteredTopics.length === 0 && (
+              <span style={{color: '#94a3b8', fontSize: '0.9rem'}}>No topics found matching "{searchTerm}"</span>
+            )}
           </div>
         </div>
 
