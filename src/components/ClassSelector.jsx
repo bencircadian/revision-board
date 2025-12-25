@@ -9,6 +9,7 @@ export default function ClassSelector({ onSelectClass, onCreateNew }) {
 
   const fetchClasses = useCallback(async () => {
     try {
+      // Direct fetch, no artificial delays
       let userId = '00000000-0000-0000-0000-000000000000';
       
       try {
@@ -45,7 +46,6 @@ export default function ClassSelector({ onSelectClass, onCreateNew }) {
     return (
       <div className="selector-page">
         <header className="page-header">
-          {/* REPLACED: Emoji with Icon */}
           <h1><Icon name="hat" size={32} style={{marginRight: '12px', color: 'var(--primary)'}} /> My Classes</h1>
           <p>Choose a class to start a DNA session</p>
         </header>
@@ -71,7 +71,6 @@ export default function ClassSelector({ onSelectClass, onCreateNew }) {
     <div className="selector-page">
       <header className="page-header">
         <div>
-          {/* REPLACED: Emoji with Icon */}
           <h1><Icon name="hat" size={32} style={{marginRight: '12px', color: 'var(--primary)'}} /> My Classes</h1>
           <p>Choose a class to start a DNA session</p>
         </div>
