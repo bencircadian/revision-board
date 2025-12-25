@@ -27,7 +27,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
         if (uniqueTopics.length > 0) {
           const firstTopic = uniqueTopics[0];
           setSelections([{ id: 1, topic: firstTopic, difficulty: '••' }]);
-          generatePreview(1, firstTopic, byTopic);
+          generatePreview(1, firstTopic, '••', byTopic);
         }
       }
       setLoading(false);
@@ -35,19 +35,53 @@ export default function CreateDNA({ onGenerate, onCancel }) {
     fetchTopics();
   }, []);
 
-  const generatePreview = (rowId, topic, questionsCache = topicQuestions) => {
-    const questions = questionsCache[topic];
-    if (questions && questions.length > 0) {
+  // Helper to normalize difficulty values from database
+  const normalizeDifficulty = (diff) => {
+    if (!diff) return '••';
+    if (diff === '•' || diff === '1' || diff.toLowerCase() === 'easy') return '•';
+    if (diff === '••' || diff === '2' || diff.toLowerCase() === 'medium') return '••';
+    if (diff === '•••' || diff === '3' || diff.toLowerCase() === 'hard') return '•••';
+    return '••';
+  };
+
+  const generatePreview = (rowId, topic, difficulty, questionsCache = topicQuestions) => {
+    const allQuestions = questionsCache[topic] || [];
+    
+    // Filter by difficulty
+    const matchingQuestions = allQuestions.filter(q => 
+      normalizeDifficulty(q.difficulty) === difficulty
+    );
+    
+    // Fall back to all questions if none match the difficulty
+    const questions = matchingQuestions.length > 0 ? matchingQuestions : allQuestions;
+    
+    if (questions.length > 0) {
       const randomQ = questions[Math.floor(Math.random() * questions.length)];
       const generated = runGenerator(randomQ.generator_code);
-      setPreviews(prev => ({ ...prev, [rowId]: { q: generated.q, a: generated.a } }));
+      setPreviews(prev => ({ 
+        ...prev, 
+        [rowId]: { 
+          q: generated.q, 
+          a: generated.a, 
+          questionData: randomQ,
+          hasMatchingDifficulty: matchingQuestions.length > 0
+        } 
+      }));
     } else {
-      setPreviews(prev => ({ ...prev, [rowId]: { q: 'No questions available', a: '-' } }));
+      setPreviews(prev => ({ 
+        ...prev, 
+        [rowId]: { 
+          q: 'No questions available', 
+          a: '-', 
+          questionData: null,
+          hasMatchingDifficulty: false
+        } 
+      }));
     }
   };
 
-  const refreshPreview = (rowId, topic) => {
-    generatePreview(rowId, topic);
+  const refreshPreview = (rowId, topic, difficulty) => {
+    generatePreview(rowId, topic, difficulty);
   };
 
   const filteredTopics = availableTopics.filter(t => 
@@ -58,8 +92,9 @@ export default function CreateDNA({ onGenerate, onCancel }) {
     if (selections.length < 6) {
       const newId = Date.now();
       const newTopic = availableTopics[0];
-      setSelections([...selections, { id: newId, topic: newTopic, difficulty: '••' }]);
-      generatePreview(newId, newTopic);
+      const newDifficulty = '••';
+      setSelections([...selections, { id: newId, topic: newTopic, difficulty: newDifficulty }]);
+      generatePreview(newId, newTopic, newDifficulty);
     }
   };
 
@@ -67,7 +102,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
     if (selections.length < 6) {
       const newId = Date.now();
       setSelections([...selections, { id: newId, topic: row.topic, difficulty: row.difficulty }]);
-      generatePreview(newId, row.topic);
+      generatePreview(newId, row.topic, row.difficulty);
     }
   };
 
@@ -82,8 +117,16 @@ export default function CreateDNA({ onGenerate, onCancel }) {
 
   const updateRow = (id, field, value) => {
     setSelections(selections.map(s => s.id === id ? { ...s, [field]: value } : s));
+    
+    // Get the current row to access both topic and difficulty
+    const currentRow = selections.find(s => s.id === id);
+    
     if (field === 'topic') {
-      generatePreview(id, value);
+      // Topic changed - regenerate with current difficulty
+      generatePreview(id, value, currentRow?.difficulty || '••');
+    } else if (field === 'difficulty') {
+      // Difficulty changed - regenerate with current topic
+      generatePreview(id, currentRow?.topic, value);
     }
   };
 
@@ -92,12 +135,13 @@ export default function CreateDNA({ onGenerate, onCancel }) {
     let generatedCards = [];
     
     for (const selection of selections) {
-      const questions = topicQuestions[selection.topic];
-      if (questions && questions.length > 0) {
-        const randomQ = questions[Math.floor(Math.random() * questions.length)];
-        const generated = runGenerator(randomQ.generator_code);
+      // Use the pre-selected question from preview if available
+      const preview = previews[selection.id];
+      
+      if (preview?.questionData) {
+        const generated = runGenerator(preview.questionData.generator_code);
         generatedCards.push({
-          ...randomQ,
+          ...preview.questionData,
           currentQ: generated.q,
           currentA: generated.a,
           revealed: false,
@@ -105,15 +149,35 @@ export default function CreateDNA({ onGenerate, onCancel }) {
           isReview: false
         });
       } else {
-        generatedCards.push({
-          id: `fallback-${Math.random()}`,
-          topic: selection.topic,
-          difficulty: selection.difficulty,
-          currentQ: `No question found for ${selection.topic}`,
-          currentA: "-",
-          revealed: false,
-          fontSize: 1.4
-        });
+        // Fallback: find a matching question
+        const allQuestions = topicQuestions[selection.topic] || [];
+        const matchingQuestions = allQuestions.filter(q => 
+          normalizeDifficulty(q.difficulty) === selection.difficulty
+        );
+        const questions = matchingQuestions.length > 0 ? matchingQuestions : allQuestions;
+        
+        if (questions.length > 0) {
+          const randomQ = questions[Math.floor(Math.random() * questions.length)];
+          const generated = runGenerator(randomQ.generator_code);
+          generatedCards.push({
+            ...randomQ,
+            currentQ: generated.q,
+            currentA: generated.a,
+            revealed: false,
+            fontSize: 1.4,
+            isReview: false
+          });
+        } else {
+          generatedCards.push({
+            id: `fallback-${Math.random()}`,
+            topic: selection.topic,
+            difficulty: selection.difficulty,
+            currentQ: `No question found for ${selection.topic}`,
+            currentA: "-",
+            revealed: false,
+            fontSize: 1.4
+          });
+        }
       }
     }
     
@@ -174,8 +238,9 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                 onClick={() => {
                   if (selections.length < 6) {
                     const newId = Date.now();
-                    setSelections([...selections, { id: newId, topic, difficulty: '••' }]);
-                    generatePreview(newId, topic);
+                    const newDifficulty = '••';
+                    setSelections([...selections, { id: newId, topic, difficulty: newDifficulty }]);
+                    generatePreview(newId, topic, newDifficulty);
                     setSearchTerm('');
                   }
                 }}
@@ -193,79 +258,87 @@ export default function CreateDNA({ onGenerate, onCancel }) {
         {/* 3. Current Questions List */}
         <div className="selection-container">
           <div className="selection-list">
-            {selections.map((row, index) => (
-              <div key={row.id} className="selection-row">
-                <div className="row-controls">
-                  <span className="row-num">{index + 1}</span>
-                  <select 
-                    value={row.topic} 
-                    onChange={(e) => updateRow(row.id, 'topic', e.target.value)}
-                    className="topic-select"
-                  >
-                    {availableTopics.map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                  
-                  {/* DIFFICULTY SECTION with New Label */}
-                  <div className="diff-container">
-                    <span className="diff-label">DIFFICULTY</span>
-                    <div className="diff-buttons">
-                      <button
-                        type="button"
-                        className={`diff-btn ${row.difficulty === '•' ? 'active' : ''}`}
-                        onClick={() => updateRow(row.id, 'difficulty', '•')}
-                        title="Level 1"
-                      >
-                        <Icon name="level1" size={20} />
-                      </button>
-                      <button
-                        type="button"
-                        className={`diff-btn ${row.difficulty === '••' ? 'active' : ''}`}
-                        onClick={() => updateRow(row.id, 'difficulty', '••')}
-                        title="Level 2"
-                      >
-                        <Icon name="level2" size={20} />
-                      </button>
-                      <button
-                        type="button"
-                        className={`diff-btn ${row.difficulty === '•••' ? 'active' : ''}`}
-                        onClick={() => updateRow(row.id, 'difficulty', '•••')}
-                        title="Level 3"
-                      >
-                        <Icon name="level3" size={20} />
-                      </button>
+            {selections.map((row, index) => {
+              const preview = previews[row.id];
+              const noMatchWarning = preview && !preview.hasMatchingDifficulty && preview.questionData;
+              
+              return (
+                <div key={row.id} className="selection-row">
+                  <div className="row-controls">
+                    <span className="row-num">{index + 1}</span>
+                    <select 
+                      value={row.topic} 
+                      onChange={(e) => updateRow(row.id, 'topic', e.target.value)}
+                      className="topic-select"
+                    >
+                      {availableTopics.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                    
+                    {/* DIFFICULTY SECTION with New Label */}
+                    <div className="diff-container">
+                      <span className="diff-label">DIFFICULTY</span>
+                      <div className="diff-buttons">
+                        <button
+                          type="button"
+                          className={`diff-btn ${row.difficulty === '•' ? 'active' : ''}`}
+                          onClick={() => updateRow(row.id, 'difficulty', '•')}
+                          title="Level 1"
+                        >
+                          <Icon name="level1" size={20} />
+                        </button>
+                        <button
+                          type="button"
+                          className={`diff-btn ${row.difficulty === '••' ? 'active' : ''}`}
+                          onClick={() => updateRow(row.id, 'difficulty', '••')}
+                          title="Level 2"
+                        >
+                          <Icon name="level2" size={20} />
+                        </button>
+                        <button
+                          type="button"
+                          className={`diff-btn ${row.difficulty === '•••' ? 'active' : ''}`}
+                          onClick={() => updateRow(row.id, 'difficulty', '•••')}
+                          title="Level 3"
+                        >
+                          <Icon name="level3" size={20} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  <button 
-                    className="btn-duplicate" 
-                    onClick={() => duplicateRow(row)}
-                    disabled={selections.length >= 6}
-                    title="Duplicate this topic"
-                  >
-                    <Icon name="copy" size={16} />
-                  </button>
-                  {selections.length > 1 && (
-                    <button className="btn-remove" onClick={() => removeRow(row.id)}>×</button>
-                  )}
-                </div>
-                
-                <div className="preview-panel">
-                  <div className="preview-content">
-                    <div className="preview-question"><strong>Q:</strong> {previews[row.id]?.q || 'Loading...'}</div>
-                    <div className="preview-answer"><strong>A:</strong> {previews[row.id]?.a || '...'}</div>
+                    <button 
+                      className="btn-duplicate" 
+                      onClick={() => duplicateRow(row)}
+                      disabled={selections.length >= 6}
+                      title="Duplicate this topic"
+                    >
+                      <Icon name="copy" size={16} />
+                    </button>
+                    {selections.length > 1 && (
+                      <button className="btn-remove" onClick={() => removeRow(row.id)}>×</button>
+                    )}
                   </div>
-                  <button 
-                    className="btn-refresh" 
-                    onClick={() => refreshPreview(row.id, row.topic)}
-                    title="Show different example"
-                  >
-                    <Icon name="refresh" size={14} />
-                  </button>
+                  
+                  <div className={`preview-panel ${noMatchWarning ? 'no-match' : ''}`}>
+                    <div className="preview-content">
+                      <div className="preview-question"><strong>Q:</strong> {preview?.q || 'Loading...'}</div>
+                      <div className="preview-answer"><strong>A:</strong> {preview?.a || '...'}</div>
+                      {noMatchWarning && (
+                        <div className="no-match-warning">⚠ No questions at this difficulty - showing any</div>
+                      )}
+                    </div>
+                    <button 
+                      className="btn-refresh" 
+                      onClick={() => refreshPreview(row.id, row.topic, row.difficulty)}
+                      title="Show different example"
+                    >
+                      <Icon name="refresh" size={14} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="add-row-container">
@@ -343,10 +416,14 @@ const createDNAStyles = `
   .btn-duplicate:disabled { opacity: 0.4; cursor: not-allowed; }
   .btn-remove { width: 32px; height: 32px; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
   .btn-remove:hover { background: #fee2e2; }
+  
   .preview-panel { flex: 1; display: flex; gap: 8px; align-items: center; background: #f8fafc; border-radius: 8px; padding: 10px 14px; border: 1px solid #f1f5f9; min-width: 0; }
+  .preview-panel.no-match { background: #fffbeb; border-color: #fde68a; }
   .preview-content { flex: 1; min-width: 0; }
   .preview-question { font-size: 0.85rem; color: #334155; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .preview-answer { font-size: 0.8rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .no-match-warning { font-size: 0.7rem; color: #d97706; margin-top: 4px; }
+  
   .btn-refresh { width: 28px; height: 28px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; color: #64748b; }
   .btn-refresh:hover { background: #f0fdfa; border-color: #99f6e4; color: #0d9488; }
   .add-row-container { height: 52px; }
