@@ -161,7 +161,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
           />
         </div>
 
-        {/* 2. Search Results / Quick Add (Moved UP above the list) */}
+        {/* 2. Search Results / Quick Add */}
         <div className="quick-topics">
           <span className="label">
             {searchTerm ? `Found ${filteredTopics.length} topics:` : 'Quick add:'}
@@ -176,7 +176,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                     const newId = Date.now();
                     setSelections([...selections, { id: newId, topic, difficulty: '••' }]);
                     generatePreview(newId, topic);
-                    setSearchTerm(''); // Optional: clear search after picking
+                    setSearchTerm('');
                   }
                 }}
                 disabled={selections.length >= 6}
@@ -190,7 +190,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
           </div>
         </div>
 
-        {/* 3. Current Questions List (Underneath Results) */}
+        {/* 3. Current Questions List */}
         <div className="selection-container">
           <div className="selection-list">
             {selections.map((row, index) => (
@@ -202,37 +202,42 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                     onChange={(e) => updateRow(row.id, 'topic', e.target.value)}
                     className="topic-select"
                   >
-                    {/* Always show ALL topics here so the current selection is never filtered out */}
                     {availableTopics.map(t => (
                       <option key={t} value={t}>{t}</option>
                     ))}
                   </select>
-                  <div className="diff-buttons">
-                    <button
-                      type="button"
-                      className={`diff-btn ${row.difficulty === '•' ? 'active' : ''}`}
-                      onClick={() => updateRow(row.id, 'difficulty', '•')}
-                      title="Level 1"
-                    >
-                      <Icon name="level1" size={20} />
-                    </button>
-                    <button
-                      type="button"
-                      className={`diff-btn ${row.difficulty === '••' ? 'active' : ''}`}
-                      onClick={() => updateRow(row.id, 'difficulty', '••')}
-                      title="Level 2"
-                    >
-                      <Icon name="level2" size={20} />
-                    </button>
-                    <button
-                      type="button"
-                      className={`diff-btn ${row.difficulty === '•••' ? 'active' : ''}`}
-                      onClick={() => updateRow(row.id, 'difficulty', '•••')}
-                      title="Level 3"
-                    >
-                      <Icon name="level3" size={20} />
-                    </button>
+                  
+                  {/* DIFFICULTY SECTION with New Label */}
+                  <div className="diff-container">
+                    <span className="diff-label">DIFFICULTY</span>
+                    <div className="diff-buttons">
+                      <button
+                        type="button"
+                        className={`diff-btn ${row.difficulty === '•' ? 'active' : ''}`}
+                        onClick={() => updateRow(row.id, 'difficulty', '•')}
+                        title="Level 1"
+                      >
+                        <Icon name="level1" size={20} />
+                      </button>
+                      <button
+                        type="button"
+                        className={`diff-btn ${row.difficulty === '••' ? 'active' : ''}`}
+                        onClick={() => updateRow(row.id, 'difficulty', '••')}
+                        title="Level 2"
+                      >
+                        <Icon name="level2" size={20} />
+                      </button>
+                      <button
+                        type="button"
+                        className={`diff-btn ${row.difficulty === '•••' ? 'active' : ''}`}
+                        onClick={() => updateRow(row.id, 'difficulty', '•••')}
+                        title="Level 3"
+                      >
+                        <Icon name="level3" size={20} />
+                      </button>
+                    </div>
                   </div>
+
                   <button 
                     className="btn-duplicate" 
                     onClick={() => duplicateRow(row)}
@@ -309,7 +314,6 @@ const createDNAStyles = `
   .topic-search input { width: 100%; padding: 14px 14px 14px 48px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 1rem; }
   .topic-search input:focus { outline: none; border-color: #14b8a6; box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1); }
   
-  /* Quick Topics / Search Results - Moved Up */
   .quick-topics { margin-bottom: 32px; padding: 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9; }
   .quick-topics .label { font-size: 0.85rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 10px; }
   .topic-chips { display: flex; flex-wrap: wrap; gap: 8px; max-height: 120px; overflow-y: auto; }
@@ -324,10 +328,16 @@ const createDNAStyles = `
   .row-controls { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
   .row-num { width: 28px; height: 28px; background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
   .topic-select { width: 180px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; background: white; }
+  
+  /* Difficulty Label Styling */
+  .diff-container { display: flex; flex-direction: column; align-items: center; margin: 0 2px; }
+  .diff-label { font-size: 0.55rem; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 3px; text-transform: uppercase; line-height: 1; }
   .diff-buttons { display: flex; gap: 4px; }
+  
   .diff-btn { width: 32px; height: 32px; border: 2px solid #e2e8f0; border-radius: 6px; background: white; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; padding: 0; color: #94a3b8; }
   .diff-btn:hover { border-color: #99f6e4; background: #f0fdfa; color: #0d9488; }
   .diff-btn.active { background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); color: white; border-color: transparent; }
+  
   .btn-duplicate { width: 32px; height: 32px; background: #f0fdfa; color: #0d9488; border: 1px solid #99f6e4; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; padding: 0; }
   .btn-duplicate:hover:not(:disabled) { background: #ccfbf1; }
   .btn-duplicate:disabled { opacity: 0.4; cursor: not-allowed; }
