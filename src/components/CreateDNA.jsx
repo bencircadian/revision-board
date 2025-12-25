@@ -186,7 +186,17 @@ export default function CreateDNA({ onGenerate, onCancel }) {
   };
 
   function runGenerator(code) {
-    try { return new Function(code)() } catch (e) { return { q: "Error", a: "..." } }
+    try {
+      if (!code) return { q: "No question available", a: "-" };
+      const result = new Function(code)();
+      if (!result || typeof result !== 'object') return { q: "Error generating question", a: "-" };
+      return { 
+        q: result.q ?? "Missing question", 
+        a: result.a ?? "-" 
+      };
+    } catch (e) { 
+      return { q: "Error in question", a: "-" }; 
+    }
   }
 
   if (loading && availableSkills.length === 0) {
