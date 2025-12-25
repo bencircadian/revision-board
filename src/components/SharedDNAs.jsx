@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+import { Icon } from './Icons';
 
 export default function SharedDNAs({ onNavigate }) {
   const [sharedBoards, setSharedBoards] = useState([]);
@@ -88,7 +89,7 @@ export default function SharedDNAs({ onNavigate }) {
     <div className="shared-page">
       <header className="page-header">
         <div className="header-content">
-          <h1>🌐 Shared DNAs</h1>
+          <h1><Icon name="globe" size={28} style={{marginRight:'10px'}} /> Shared DNAs</h1>
           <p>Browse boards shared by the community</p>
         </div>
       </header>
@@ -96,7 +97,7 @@ export default function SharedDNAs({ onNavigate }) {
       {/* Filters */}
       <div className="filters-bar">
         <div className="search-box">
-          <span className="search-icon">🔍</span>
+          <span className="search-icon"><Icon name="search" size={16} /></span>
           <input
             type="text"
             placeholder="Search shared boards..."
@@ -119,7 +120,7 @@ export default function SharedDNAs({ onNavigate }) {
       {/* Board Cards */}
       {filteredBoards.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">🌐</div>
+          <div className="empty-icon"><Icon name="globe" size={64} /></div>
           <h3>No shared boards yet</h3>
           <p>Share a DNA board to see it appear here. Shared boards help teachers collaborate!</p>
         </div>
@@ -169,20 +170,20 @@ export default function SharedDNAs({ onNavigate }) {
 
       {/* Info Section */}
       <section className="info-section">
-        <h2>💡 How Sharing Works</h2>
+        <h2><Icon name="bulb" size={22} /> How Sharing Works</h2>
         <div className="info-cards">
           <div className="info-card">
-            <span className="info-icon">📤</span>
+            <span className="info-icon"><Icon name="link" size={24} /></span>
             <h4>Share Your Board</h4>
             <p>Click "Share Board" during any DNA session to create a link</p>
           </div>
           <div className="info-card">
-            <span className="info-icon">📥</span>
+            <span className="info-icon"><Icon name="link" size={24} /></span>
             <h4>Use Shared Boards</h4>
             <p>Browse and load boards created by other teachers</p>
           </div>
           <div className="info-card">
-            <span className="info-icon">🔄</span>
+            <><Icon name="refresh" size={14} /> Test</>
             <h4>Regenerate Questions</h4>
             <p>Shared boards use generators, so each use creates new instances</p>
           </div>
