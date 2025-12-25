@@ -40,11 +40,6 @@ function App() {
     setDateStr(new Date().toLocaleDateString('en-GB', options));
   }, []);
 
-  // DEBUG: Log whenever cards change
-  useEffect(() => {
-    console.log('Cards updated, count:', cards.length, cards.map(c => c.topic));
-  }, [cards]);
-
   // --- NAVIGATION ---
   const goHome = () => { setView('home'); setCards([]); setRatings({}); setCurrentClass(null); };
   const startClassSelection = () => setView('selector');
@@ -54,7 +49,6 @@ function App() {
 
   // --- DATA & GENERATORS ---
   async function fetchAndInitCards(classObj) {
-    console.log('fetchAndInitCards called'); // DEBUG
     setLoading(true);
     const classId = classObj ? classObj.name : "Default Class"; 
 
@@ -85,28 +79,45 @@ function App() {
     }
 
     const finalBoard = [
-      ...reviewQuestions.map(q => ({
-        ...q, id: `review-${Math.random()}`, currentQ: q.question_text, currentA: q.answer_text,
-        revealed: false, fontSize: 1.4, isReview: true
+      ...reviewQuestions.map((q, idx) => ({
+        ...q, 
+        currentQ: q.question_text, 
+        currentA: q.answer_text,
+        revealed: false, 
+        fontSize: 1.4, 
+        isReview: true
       })),
-      ...newQuestions.map(q => {
+      ...newQuestions.map((q, idx) => {
         const generated = runGenerator(q.generator_code);
         return {
-          ...q, currentQ: generated.q, currentA: generated.a,
-          revealed: false, fontSize: 1.4, isReview: false
+          ...q, 
+          currentQ: generated.q, 
+          currentA: generated.a,
+          revealed: false, 
+          fontSize: 1.4, 
+          isReview: false
         };
       })
     ];
 
-    // Force max 6 items
+    // Force max 6 items, shuffle, then assign stable slot keys LAST
     const limitedCards = finalBoard.slice(0, 6).sort(() => 0.5 - Math.random());
-    console.log('Setting initial cards, count:', limitedCards.length); // DEBUG
-    setCards(limitedCards);
+    const cardsWithSlotKeys = limitedCards.map((card, idx) => ({
+      ...card,
+      slotKey: `slot-${idx}`  // Stable key based on position
+    }));
+    
+    setCards(cardsWithSlotKeys);
     setLoading(false);
   }
 
   const handleCustomGeneration = (newCards) => {
-    setCards(newCards);
+    // Assign slot keys to custom generated cards
+    const cardsWithKeys = newCards.map((card, idx) => ({
+      ...card,
+      slotKey: `slot-${idx}`
+    }));
+    setCards(cardsWithKeys);
     setRatings({}); 
     setView('dashboard'); 
   };
@@ -115,7 +126,7 @@ function App() {
     try { return new Function(code)() } catch (e) { return { q: "Error", a: "..." } }
   }
 
-  // --- CARD ACTIONS (Fixed: Functional Updates) ---
+  // --- CARD ACTIONS ---
 
   const changeFontSize = (e, index, delta) => {
     e.stopPropagation(); 
@@ -136,20 +147,18 @@ function App() {
     if (cardToRefresh && cardToRefresh.generator_code) {
       const generated = runGenerator(cardToRefresh.generator_code);
       
-      setCards(prevCards => {
-        console.log('refreshCard: prevCards length:', prevCards.length); // DEBUG
-        return prevCards.map((card, i) => {
-          if (i === index) {
-            return {
-              ...card,
-              currentQ: generated.q,
-              currentA: generated.a,
-              revealed: false
-            };
-          }
-          return card;
-        });
-      });
+      setCards(prevCards => prevCards.map((card, i) => {
+        if (i === index) {
+          return {
+            ...card,
+            currentQ: generated.q,
+            currentA: generated.a,
+            revealed: false
+            // slotKey stays the same - DO NOT change it
+          };
+        }
+        return card;
+      }));
 
       setRatings(prevRatings => {
         const newR = { ...prevRatings };
@@ -166,42 +175,28 @@ function App() {
     e.preventDefault(); 
     e.stopPropagation();
 
-    console.log('swapTopic called for index:', index); // DEBUG
-    console.log('Current cards count BEFORE fetch:', cards.length); // DEBUG
-
     const { data } = await supabase.from('questions').select('*');
-    
-    console.log('Supabase returned, current cards count:', cards.length); // DEBUG
     
     if (data && data.length > 0) {
       const randomQ = data[Math.floor(Math.random() * data.length)];
       const generated = runGenerator(randomQ.generator_code);
-      
-      const newCard = {
-        ...randomQ,
-        id: `swap-${Date.now()}`, 
-        currentQ: generated.q, 
-        currentA: generated.a, 
-        revealed: false, 
-        fontSize: 1.4, 
-        isReview: false 
-      };
 
-      setCards(prevCards => {
-        console.log('swapTopic setCards: prevCards length:', prevCards.length); // DEBUG
-        
-        // STRICT: Create new array with exact same length
-        const newCards = prevCards.map((card, i) => {
-          if (i === index) {
-            console.log('Replacing card at index', i, 'with topic:', newCard.topic); // DEBUG
-            return newCard;
-          }
-          return card;
-        });
-        
-        console.log('swapTopic setCards: newCards length:', newCards.length); // DEBUG
-        return newCards;
-      });
+      setCards(prevCards => prevCards.map((card, i) => {
+        if (i === index) {
+          return {
+            ...randomQ,
+            // CRITICAL: Keep the same slotKey so React updates the DOM element
+            // instead of creating a new one
+            slotKey: card.slotKey,
+            currentQ: generated.q, 
+            currentA: generated.a, 
+            revealed: false, 
+            fontSize: 1.4, 
+            isReview: false 
+          };
+        }
+        return card;
+      }));
       
       setRatings(prevRatings => {
         const newR = { ...prevRatings };
@@ -296,17 +291,12 @@ function App() {
 
   if (loading) return <div style={{padding: 40}}>Loading Board...</div>;
 
-  // DEBUG: Show card count
-  console.log('Rendering dashboard with', cards.length, 'cards');
-
   return (
     <div>
       <header>
         <div className="logo" onClick={goHome}><div className="logo-mark">R</div><span className="logo-text">Revision Board</span></div>
         <div className="header-controls">
           {currentClass && <span style={{marginRight:10, fontWeight:'bold', color:'#2c3e50'}}>{currentClass.name}</span>}
-          {/* DEBUG: Show card count */}
-          <span style={{marginRight:10, color:'red', fontWeight:'bold'}}>Cards: {cards.length}</span>
           <button className="btn btn-secondary" onClick={() => setRatings({})}>Reset</button>
           <button className="btn btn-secondary" onClick={() => window.print()}>Print</button>
           <button className="btn btn-primary" onClick={goHome}>Exit</button>
@@ -320,8 +310,9 @@ function App() {
         </div>
 
         <div className="questions-grid">
+          {/* KEY FIX: Use stable slotKey instead of random id */}
           {cards.map((card, index) => (
-            <div key={card.id || `card-${index}`} className="question-card">
+            <div key={card.slotKey} className="question-card">
               <div className="card-header">
                 <div className="card-number">{index + 1}</div>
                 
