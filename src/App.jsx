@@ -92,7 +92,7 @@ function App() {
       })
     ];
 
-    // Ensure we only ever have 6 cards max
+    // Force max 6 items
     setCards(finalBoard.slice(0, 6).sort(() => 0.5 - Math.random()));
     setLoading(false);
   }
@@ -104,99 +104,106 @@ function App() {
   };
 
   function runGenerator(code) {
-    try { 
-      return new Function(code)() 
-    } catch (e) { 
-      // Graceful error fallback
-      return { q: "Question template error", a: "Check DB" } 
-    }
+    try { return new Function(code)() } catch (e) { return { q: "Error", a: "..." } }
   }
 
-  // --- CARD ACTIONS ---
+  // --- CARD ACTIONS (Fixed: Functional Updates) ---
 
   const changeFontSize = (e, index, delta) => {
     e.stopPropagation(); 
-    setCards(prevCards => 
-      prevCards.map((card, i) => 
-        i === index 
-          ? { ...card, fontSize: Math.max(0.5, Math.min(5.0, card.fontSize + delta)) }
-          : card
-      )
-    );
+    setCards(prevCards => prevCards.map((card, i) => {
+      if (i === index) {
+        return { ...card, fontSize: Math.max(0.5, Math.min(5.0, card.fontSize + delta)) };
+      }
+      return card;
+    }));
   };
 
   const refreshCard = (e, index) => {
-    e.preventDefault(); 
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     
-    setCards(prevCards => {
-      const card = prevCards[index];
-      if (card.generator_code) {
-        const generated = runGenerator(card.generator_code);
-        return prevCards.map((c, i) => 
-          i === index 
-            ? { ...c, currentQ: generated.q, currentA: generated.a, revealed: false }
-            : c
-        );
-      } else { 
-        alert("This is a fixed review card, it cannot be refreshed."); 
-        return prevCards;
-      }
-    });
-    
-    setRatings(prevRatings => {
-      const newRatings = { ...prevRatings }; 
-      delete newRatings[index]; 
-      return newRatings;
-    });
+    // We need to read the card to get the generator code, but update securely
+    // It's safe to read 'cards' here for the *logic*, but we must use prevCards for the *update*
+    const cardToRefresh = cards[index]; 
+
+    if (cardToRefresh.generator_code) {
+      const generated = runGenerator(cardToRefresh.generator_code);
+      
+      setCards(prevCards => prevCards.map((card, i) => {
+        if (i === index) {
+          return {
+            ...card,
+            currentQ: generated.q,
+            currentA: generated.a,
+            revealed: false
+          };
+        }
+        return card;
+      }));
+
+      // Reset rating for this specific card
+      setRatings(prevRatings => {
+        const newR = { ...prevRatings };
+        delete newR[index];
+        return newR;
+      });
+
+    } else { 
+      alert("This is a fixed review card, it cannot be refreshed."); 
+    }
   };
 
   const swapTopic = async (e, index) => {
-    e.preventDefault(); 
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
 
     const { data } = await supabase.from('questions').select('*');
     if (data && data.length > 0) {
       const randomQ = data[Math.floor(Math.random() * data.length)];
       const generated = runGenerator(randomQ.generator_code);
       
-      // Create the replacement card
-      const replacementCard = { 
-        ...randomQ, 
-        id: `swap-${Date.now()}-${index}`, 
-        currentQ: generated.q, 
-        currentA: generated.a, 
-        revealed: false, 
-        fontSize: 1.4, 
-        isReview: false 
-      };
+      // Fixed: Using functional update to ensure we replace strictly at the index
+      // regardless of when the async call returns.
+      setCards(prevCards => prevCards.map((card, i) => {
+        if (i === index) {
+          return {
+            ...randomQ,
+            id: `swap-${Math.random()}`, 
+            currentQ: generated.q, 
+            currentA: generated.a, 
+            revealed: false, 
+            fontSize: 1.4, 
+            isReview: false 
+          };
+        }
+        return card;
+      }));
       
-      // Use functional update to ensure we're working with latest state
-      // Map creates a new array, replacing ONLY the card at the specified index
-      setCards(prevCards => 
-        prevCards.map((card, i) => i === index ? replacementCard : card)
-      );
-      
+      // Reset rating
       setRatings(prevRatings => {
-        const newRatings = { ...prevRatings }; 
-        delete newRatings[index]; 
-        return newRatings;
+        const newR = { ...prevRatings };
+        delete newR[index];
+        return newR;
       });
     }
   };
 
   const toggleReveal = (index) => {
-    setCards(prevCards => 
-      prevCards.map((card, i) => 
-        i === index ? { ...card, revealed: !card.revealed } : card
-      )
-    );
+    setCards(prevCards => prevCards.map((card, i) => {
+      if (i === index) {
+        return { ...card, revealed: !card.revealed };
+      }
+      return card;
+    }));
   };
 
   const handleRating = (index, score) => {
-    const newRatings = { ...ratings, [index]: score };
-    setRatings(newRatings);
-    if (Object.keys(newRatings).length === cards.length) setTimeout(() => setShowSaveModal(true), 500); 
+    setRatings(prev => {
+        const newRatings = { ...prev, [index]: score };
+        if (Object.keys(newRatings).length === cards.length) {
+            setTimeout(() => setShowSaveModal(true), 500);
+        }
+        return newRatings;
+    });
   };
 
   const saveSession = async () => {
