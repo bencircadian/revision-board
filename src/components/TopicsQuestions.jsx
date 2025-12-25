@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import { Icon } from './Icons';
 
@@ -17,6 +17,25 @@ const DIFFICULTIES = {
 
 const getDifficultyInfo = (diff) => {
   return DIFFICULTIES[diff] || DIFFICULTIES['••'];
+};
+
+// Helper component to render HTML/SVG content safely
+const QuestionDisplay = ({ content }) => {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      // Basic rendering of HTML/SVG string
+      containerRef.current.innerHTML = content;
+      
+      // Optional: If you use KaTeX in the future, add render logic here
+      if (window.katex && (content.includes('$') || content.includes('\\'))) {
+         // KaTeX logic could go here similar to DNABoard
+      }
+    }
+  }, [content]);
+
+  return <div ref={containerRef} className="question-content-display" />;
 };
 
 export default function TopicsQuestions({ onNavigate }) {
@@ -65,9 +84,10 @@ export default function TopicsQuestions({ onNavigate }) {
   const runGenerator = (code) => {
     try { 
       if (!code) return { q: "No code provided", a: "..." };
+      // Execute the generator code to get a preview string/html
       return new Function(code)() 
     } catch (e) { 
-      return { q: "Preview not available (Error)", a: "Check code syntax" } 
+      return { q: "Preview Error", a: "Check code syntax" } 
     }
   };
 
@@ -98,7 +118,6 @@ export default function TopicsQuestions({ onNavigate }) {
 
     let error;
     if (editingId) {
-      // Update existing
       const { error: updateError } = await supabase
         .from('questions')
         .update({
@@ -109,7 +128,6 @@ export default function TopicsQuestions({ onNavigate }) {
         .eq('id', editingId);
       error = updateError;
     } else {
-      // Insert new
       const { error: insertError } = await supabase
         .from('questions')
         .insert([{
@@ -163,12 +181,12 @@ export default function TopicsQuestions({ onNavigate }) {
           <span className="topic-badge">{q.topic}</span>
         </div>
         
-        {/* Always show the EXECUTED preview, never the code by default */}
+        {/* RENDERED PREVIEW (Images/Math instead of raw code) */}
         <div className="question-preview">
-          <strong>Q:</strong> {example.q}
+          <strong>Q:</strong> <QuestionDisplay content={example.q} />
         </div>
         <div className="answer-preview">
-          <strong>A:</strong> {example.a}
+          <strong>A:</strong> <QuestionDisplay content={example.a} />
         </div>
 
         {isExpanded && (
@@ -180,7 +198,7 @@ export default function TopicsQuestions({ onNavigate }) {
               
               <button className="action-btn" onClick={(e) => {
                 e.stopPropagation();
-                // Force a re-render to test generator (simple way)
+                // Force re-render to test generator
                 setQuestions([...questions]); 
               }}>
                 <Icon name="refresh" size={14} /> Test New Version
@@ -194,7 +212,7 @@ export default function TopicsQuestions({ onNavigate }) {
               </button>
             </div>
 
-            {/* Only show code if explicitly requested */}
+            {/* Code is HIDDEN unless toggled */}
             {showSourceCode && (
               <div className="code-block">
                 <pre>{q.generator_code}</pre>
@@ -343,8 +361,8 @@ export default function TopicsQuestions({ onNavigate }) {
             {formData.generator_code && (
               <div className="preview-box">
                 <h4>Preview Output:</h4>
-                <p><strong>Q:</strong> {runGenerator(formData.generator_code).q}</p>
-                <p><strong>A:</strong> {runGenerator(formData.generator_code).a}</p>
+                <p><strong>Q:</strong> <QuestionDisplay content={runGenerator(formData.generator_code).q} /></p>
+                <p><strong>A:</strong> <QuestionDisplay content={runGenerator(formData.generator_code).a} /></p>
               </div>
             )}
             <div className="modal-actions">
@@ -373,6 +391,11 @@ const topicsStyles = `
   .search-box input { width: 100%; padding: 14px 14px 14px 48px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 1rem; transition: all 0.2s; }
   .search-box input:focus { outline: none; border-color: #14b8a6; box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1); }
   .topic-filter { padding: 14px 20px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 1rem; background: white; min-width: 200px; cursor: pointer; }
+  
+  /* Question Display */
+  .question-content-display { display: inline-block; vertical-align: middle; }
+  .question-content-display svg { max-height: 40px; vertical-align: middle; }
+  
   .search-results-section { margin-bottom: 40px; }
   .search-results-section h2 { font-size: 1.2rem; color: #0d9488; margin: 0 0 20px 0; display: flex; align-items: center; }
   .search-results-section h2 .count { color: #64748b; font-weight: 400; margin-left: 8px; }
@@ -405,7 +428,10 @@ const topicsStyles = `
   .question-preview, .answer-preview { font-size: 0.9rem; color: #334155; margin-bottom: 6px; }
   .answer-preview { color: #64748b; }
   .question-details { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f1f5f9; }
+  
+  /* Code Block hidden by default */
   .code-block { background: #f8fafc; padding: 12px; border-radius: 8px; font-size: 0.75rem; overflow-x: auto; margin-top: 12px; border: 1px solid #e2e8f0; }
+  
   .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .action-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: white; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; color: #64748b; }
   .action-btn:hover { background: #f0fdfa; border-color: #99f6e4; color: #0d9488; }
