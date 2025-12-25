@@ -199,7 +199,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                       onClick={() => updateRow(row.id, 'difficulty', '•')}
                       title="Level 1"
                     >
-                      •
+                      <Icon name="level1" size={20} />
                     </button>
                     <button
                       type="button"
@@ -207,7 +207,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                       onClick={() => updateRow(row.id, 'difficulty', '••')}
                       title="Level 2"
                     >
-                      ••
+                      <Icon name="level2" size={20} />
                     </button>
                     <button
                       type="button"
@@ -215,18 +215,17 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                       onClick={() => updateRow(row.id, 'difficulty', '•••')}
                       title="Level 3"
                     >
-                      •••
+                      <Icon name="level3" size={20} />
                     </button>
                   </div>
                   <button 
-  className="btn-duplicate" 
-  onClick={() => duplicateRow(row)}
-  disabled={selections.length >= 6}
-  title="Duplicate this topic"
->
-  {/* Replaced '⧉' with Icon */}
-  <Icon name="copy" size={16} />
-</button>
+                    className="btn-duplicate" 
+                    onClick={() => duplicateRow(row)}
+                    disabled={selections.length >= 6}
+                    title="Duplicate this topic"
+                  >
+                    <Icon name="copy" size={16} />
+                  </button>
                   {selections.length > 1 && (
                     <button className="btn-remove" onClick={() => removeRow(row.id)}>×</button>
                   )}
@@ -294,12 +293,12 @@ export default function CreateDNA({ onGenerate, onCancel }) {
           <div className="main-actions">
             <button className="btn-cancel" onClick={onCancel}>Cancel</button>
             <button className="btn-generate" onClick={handleGenerate} disabled={loading}>
-  {loading ? 'Generating...' : (
-    <>
-      <Icon name="rocket" size={18} style={{marginRight: '8px'}} /> Generate Board
-    </>
-  )}
-</button>
+              {loading ? 'Generating...' : (
+                <>
+                  <Icon name="rocket" size={18} style={{marginRight: '8px'}} /> Generate Board
+                </>
+              )}
+            </button>
           </div>
         </div>
 
@@ -449,29 +448,22 @@ const createDNAStyles = `
     gap: 4px;
   }
 
-.diff-btn {
+  .diff-btn {
     width: 32px;
     height: 32px;
     border: 2px solid #e2e8f0;
     border-radius: 6px;
     background: white;
-    font-size: 1.2rem; /* Increased size slightly */
-    font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    
-    /* FIX FOR BLEEDING DOTS: */
-    letter-spacing: 2px; /* Changed from -1px to 2px */
-    text-indent: 2px;    /* Offsets the spacing so dots stay centered */
-    line-height: 1;
-    padding-bottom: 3px; /* Optical adjustment */
-    color: #94a3b8;      /* Muted color by default */
+    padding: 0; 
+    color: #94a3b8;
   }
 
-.diff-btn:hover {
+  .diff-btn:hover {
     border-color: #99f6e4;
     background: #f0fdfa;
     color: #0d9488;
@@ -495,7 +487,7 @@ const createDNAStyles = `
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
-    padding: 0; /* Removes padding to ensure perfect SVG centering */
+    padding: 0; 
   }
 
   .btn-duplicate:hover:not(:disabled) {
