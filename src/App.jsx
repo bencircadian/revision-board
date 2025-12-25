@@ -109,14 +109,14 @@ function App() {
   // --- CARD ACTIONS ---
 
   const changeFontSize = (e, index, delta) => {
-    e.stopPropagation(); // Stop click from hitting anything else
+    e.stopPropagation(); 
     const newCards = [...cards];
     newCards[index].fontSize = Math.max(0.5, Math.min(5.0, newCards[index].fontSize + delta));
     setCards(newCards);
   };
 
   const refreshCard = (e, index) => {
-    e.preventDefault(); // Stop page reload
+    e.preventDefault(); 
     e.stopPropagation();
     
     const newCards = [...cards];
@@ -130,7 +130,7 @@ function App() {
   };
 
   const swapTopic = async (e, index) => {
-    e.preventDefault(); // Stop page reload
+    e.preventDefault(); // STOP page reload
     e.stopPropagation();
 
     const { data } = await supabase.from('questions').select('*');
