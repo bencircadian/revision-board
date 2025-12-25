@@ -87,13 +87,14 @@ main {
 
 /* --- CARD HEADER --- */
 .card-header {
-  padding: 10px 15px; 
+  padding: 0 15px; /* Removed vertical padding, handled by line-height/flex */
   border-bottom: 1px solid #eee;
   display: flex; 
   align-items: center; 
-  justify-content: space-between; /* Pushes text left, buttons right */
+  justify-content: space-between; 
   background: #fdfdfd;
-  height: 50px; /* Enforce a consistent height */
+  height: 50px; /* Locked height prevents layout jumping */
+  position: relative; /* Needed for the hover effect */
 }
 
 .card-number {
@@ -108,32 +109,48 @@ main {
   font-weight: bold; 
   font-size: 0.8rem; 
   margin-right: 10px;
-  flex-shrink: 0; /* Prevents number box from squashing */
+  flex-shrink: 0; /* Prevents number from squashing */
 }
 
 .card-topic { 
   font-weight: 700; 
   color: #444; 
-  font-size: 0.75rem; /* Reduced size to fit long titles */
+  font-size: 0.75rem; 
   text-transform: uppercase; 
   letter-spacing: 0.5px;
-  flex: 1; /* Takes up all available space */
+  flex: 1; 
   text-align: left;
   
-  /* Force single line with ... if too long */
+  /* Default state: Single line with ... */
   white-space: nowrap; 
   overflow: hidden; 
   text-overflow: ellipsis;
-  margin-right: 10px; /* Space between text and buttons */
+  margin-right: 10px;
+  
+  /* Interaction */
+  cursor: help; /* Shows a ? cursor to indicate you can hover */
+  padding: 15px 0; /* Match header height for easy hovering */
+}
+
+/* THE HOVER EFFECT */
+.card-topic:hover {
+  position: absolute;
+  left: 45px; /* Offset to clear the number box */
+  right: 5px; /* Stretch to the right edge */
+  background: #fdfdfd; /* Opaque background hides the buttons */
+  z-index: 10; /* Sit on top of buttons */
+  white-space: normal; /* Allow wrapping */
+  overflow: visible;
+  box-shadow: -10px 0 15px -5px #fdfdfd; /* Soft blend on the left */
+  color: var(--accent-2); /* Highlight color when reading */
 }
 
 .card-actions { 
   display: flex; 
   align-items: center; 
   gap: 5px; 
-  flex-shrink: 0; /* Crucial: Prevents buttons from wrapping or shrinking */
+  flex-shrink: 0; /* Locks buttons in place */
 }
-
 /* Zoom Controls */
 .zoom-controls {
   display: flex; gap: 2px; margin-right: 8px; padding-right: 8px;
