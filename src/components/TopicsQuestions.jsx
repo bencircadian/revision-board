@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+import { Icon } from './Icons';
 
 // Difficulty mapping: database stores '•', '••', '•••' or level 1, 2, 3
 const DIFFICULTIES = {
@@ -108,18 +109,18 @@ export default function TopicsQuestions({ onNavigate }) {
       {/* Header */}
       <header className="page-header">
         <div className="header-content">
-          <h1>📚 Topics & Questions</h1>
+          <h1><Icon name="books" size={28} style={{marginRight:'10px'}} /> Topics & Questions</h1>
           <p>Browse and manage your question bank</p>
         </div>
         <button className="btn-add" onClick={() => setShowAddModal(true)}>
-          + Add Question
+          <><Icon name="plus" size={16} /> Add Question</>
         </button>
       </header>
 
       {/* Filters */}
       <div className="filters-bar">
         <div className="search-box">
-          <span className="search-icon">🔍</span>
+          <span className="search-icon"><Icon name="search" size={16} /></span>
           <input
             type="text"
             placeholder="Search questions..."
@@ -183,7 +184,7 @@ export default function TopicsQuestions({ onNavigate }) {
           <span className="count">({filteredQuestions.length})</span>
           {selectedTopic !== 'all' && (
             <button className="btn-clear" onClick={() => setSelectedTopic('all')}>
-              × Clear filter
+              Clear filter
             </button>
           )}
         </h2>
@@ -223,14 +224,14 @@ export default function TopicsQuestions({ onNavigate }) {
                       <pre>{q.generator_code}</pre>
                       <div className="detail-actions">
                         <button onClick={(e) => { e.stopPropagation(); /* Edit logic */ }}>
-                          ✏️ Edit
+                          <><Icon name="edit" size={14} /> Edit</>
                         </button>
                         <button onClick={(e) => {
                           e.stopPropagation();
                           const newExample = runGenerator(q.generator_code);
                           alert(`New instance:\nQ: ${newExample.q}\nA: ${newExample.a}`);
                         }}>
-                          🔄 Test
+                          <><Icon name="refresh" size={14} /> Test</>
                         </button>
                       </div>
                     </div>
@@ -246,7 +247,7 @@ export default function TopicsQuestions({ onNavigate }) {
       {showAddModal && (
         <div className="modal-backdrop">
           <div className="modal-box large">
-            <h3>➕ Add New Question</h3>
+            <h3><Icon name="plus" size={20} /> Add New Question</h3>
             <div className="form-group">
               <label>Topic</label>
               <input
