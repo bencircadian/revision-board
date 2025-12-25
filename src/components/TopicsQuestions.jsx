@@ -435,4 +435,22 @@ const topicsStyles = `
   .action-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
   .action-btn.primary { background: #0d9488; color: white; border-color: #0d9488; }
   .action-btn.primary:hover { background: #0f766e; }
-  .code-block { background:
+  .code-block { background: #1e293b; color: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 0.75rem; overflow-x: auto; margin-top: 12px; }
+
+  /* Modal */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+  .modal-box { background: white; padding: 32px; border-radius: 16px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal-box h3 { margin-top: 0; display: flex; align-items: center; gap: 8px; color: #1e293b; }
+  .form-row { display: flex; gap: 16px; margin-bottom: 16px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group.half { flex: 1; }
+  .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 0.95rem; }
+  .form-group textarea { font-family: monospace; font-size: 0.85rem; }
+  .preview-box { background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 0.9rem; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
+  .btn-cancel { padding: 10px 20px; background: #f1f5f9; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: #64748b; }
+  .btn-confirm { padding: 10px 20px; background: #0d9488; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; }
+
+  @media (max-width: 640px) { .form-row { flex-direction: column; gap: 0; } }
+`;
