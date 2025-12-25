@@ -92,7 +92,8 @@ function App() {
       })
     ];
 
-    setCards(finalBoard.sort(() => 0.5 - Math.random()));
+    // Ensure we only ever have 6 cards max
+    setCards(finalBoard.slice(0, 6).sort(() => 0.5 - Math.random()));
     setLoading(false);
   }
 
@@ -103,7 +104,12 @@ function App() {
   };
 
   function runGenerator(code) {
-    try { return new Function(code)() } catch (e) { return { q: "Error", a: "..." } }
+    try { 
+      return new Function(code)() 
+    } catch (e) { 
+      // Graceful error fallback
+      return { q: "Question template error", a: "Check DB" } 
+    }
   }
 
   // --- CARD ACTIONS ---
@@ -123,10 +129,18 @@ function App() {
     const card = newCards[index];
     if (card.generator_code) {
       const generated = runGenerator(card.generator_code);
-      card.currentQ = generated.q; card.currentA = generated.a; card.revealed = false;
-      const newRatings = { ...ratings }; delete newRatings[index]; setRatings(newRatings);
+      card.currentQ = generated.q; 
+      card.currentA = generated.a; 
+      card.revealed = false;
+      
+      const newRatings = { ...ratings }; 
+      delete newRatings[index]; 
+      setRatings(newRatings);
+      
       setCards(newCards);
-    } else { alert("This is a fixed review card, it cannot be refreshed."); }
+    } else { 
+      alert("This is a fixed review card, it cannot be refreshed."); 
+    }
   };
 
   const swapTopic = async (e, index) => {
@@ -139,7 +153,7 @@ function App() {
       const generated = runGenerator(randomQ.generator_code);
       
       const newCards = [...cards];
-      // STRICT REPLACEMENT of the single card
+      // STRICT REPLACEMENT: Only updates the specific card at 'index'
       newCards[index] = { 
         ...randomQ, 
         id: `swap-${Math.random()}`, 
@@ -150,7 +164,10 @@ function App() {
         isReview: false 
       };
       
-      const newRatings = { ...ratings }; delete newRatings[index]; setRatings(newRatings);
+      const newRatings = { ...ratings }; 
+      delete newRatings[index]; 
+      setRatings(newRatings);
+      
       setCards(newCards);
     }
   };
@@ -251,15 +268,17 @@ function App() {
           <span className="date-display">{dateStr}</span>
         </div>
 
-        {/* --- GRID STARTS HERE (Ensure this appears only ONCE) --- */}
         <div className="questions-grid">
           {cards.map((card, index) => (
             <div key={card.id || index} className="question-card">
               <div className="card-header">
                 <div className="card-number">{index + 1}</div>
+                
+                {/* Topic Title with Hover Effect */}
                 <div className="card-topic" title={card.topic}>
                   {card.isReview ? "↺ " : ""}{card.topic}
                 </div>
+                
                 <div className="card-actions">
                   <div className="zoom-controls">
                     <button className="zoom-btn" type="button" onClick={(e) => changeFontSize(e, index, -0.2)}>-</button>
@@ -289,7 +308,6 @@ function App() {
             </div>
           ))}
         </div>
-        {/* --- GRID ENDS HERE --- */}
       </main>
 
       {showSaveModal && (
