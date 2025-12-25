@@ -1,5 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
-import { supabase } from './supabase'
+import { useEffect, useState } from 'react'
 import Dashboard from './components/Dashboard'
 import DNABoard from './components/DNABoard'
 import CreateDNA from './components/CreateDNA'
@@ -9,6 +8,7 @@ import TopicsQuestions from './components/TopicsQuestions'
 import SharedDNAs from './components/SharedDNAs'
 import Feedback from './components/Feedback'
 import Sidebar from './components/Sidebar'
+import { Icon } from './components/Icons'
 import './App.css'
 
 function App() {
@@ -18,7 +18,6 @@ function App() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Handle responsive behavior
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
@@ -37,46 +36,33 @@ function App() {
 
   const renderContent = () => {
     switch (currentView) {
-      case 'dashboard':
-        return <Dashboard onNavigate={navigate} />;
-      case 'dna-board':
-        return <DNABoard currentClass={currentClass} onNavigate={navigate} />;
-      case 'create-dna':
-        return <CreateDNA onGenerate={(cards) => { navigate('dna-board', { name: 'Custom Session', cards }); }} onCancel={() => navigate('dashboard')} />;
-      case 'classes':
-        return <ClassSelector onSelectClass={(cls) => navigate('dna-board', cls)} onCreateNew={() => navigate('create-class')} />;
-      case 'create-class':
-        return <CreateClass onSave={() => navigate('classes')} onCancel={() => navigate('classes')} />;
-      case 'topics':
-        return <TopicsQuestions onNavigate={navigate} />;
-      case 'shared':
-        return <SharedDNAs onNavigate={navigate} />;
-      case 'feedback':
-        return <Feedback onNavigate={navigate} />;
-      default:
-        return <Dashboard onNavigate={navigate} />;
+      case 'dashboard': return <Dashboard onNavigate={navigate} />;
+      case 'dna-board': return <DNABoard currentClass={currentClass} onNavigate={navigate} />;
+      case 'create-dna': return <CreateDNA onGenerate={(cards) => { navigate('dna-board', { name: 'Custom Session', cards }); }} onCancel={() => navigate('dashboard')} />;
+      case 'classes': return <ClassSelector onSelectClass={(cls) => navigate('dna-board', cls)} onCreateNew={() => navigate('create-class')} />;
+      case 'create-class': return <CreateClass onSave={() => navigate('classes')} onCancel={() => navigate('classes')} />;
+      case 'topics': return <TopicsQuestions onNavigate={navigate} />;
+      case 'shared': return <SharedDNAs onNavigate={navigate} />;
+      case 'feedback': return <Feedback onNavigate={navigate} />;
+      default: return <Dashboard onNavigate={navigate} />;
     }
   };
 
   return (
     <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${isMobile ? 'mobile' : ''}`}>
-      {/* Mobile Header */}
       {isMobile && (
         <header className="mobile-header">
           <button className="menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            <span></span>
-            <span></span>
-            <span></span>
+            <span></span><span></span><span></span>
           </button>
           <div className="mobile-logo">
-            <span className="logo-mark">E</span>
+            <Icon name="logo" size={32} />
             <span className="logo-text">Engram</span>
           </div>
           <div className="mobile-spacer"></div>
         </header>
       )}
 
-      {/* Sidebar */}
       <Sidebar 
         currentView={currentView}
         onNavigate={navigate}
@@ -87,12 +73,10 @@ function App() {
         onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
-      {/* Mobile Overlay */}
       {isMobile && mobileMenuOpen && (
         <div className="mobile-overlay" onClick={() => setMobileMenuOpen(false)} />
       )}
 
-      {/* Main Content */}
       <main className="main-content">
         {renderContent()}
       </main>
