@@ -219,13 +219,14 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                     </button>
                   </div>
                   <button 
-                    className="btn-duplicate" 
-                    onClick={() => duplicateRow(row)}
-                    disabled={selections.length >= 6}
-                    title="Duplicate this topic"
-                  >
-                    ⧉
-                  </button>
+  className="btn-duplicate" 
+  onClick={() => duplicateRow(row)}
+  disabled={selections.length >= 6}
+  title="Duplicate this topic"
+>
+  {/* Replaced '⧉' with Icon */}
+  <Icon name="copy" size={16} />
+</button>
                   {selections.length > 1 && (
                     <button className="btn-remove" onClick={() => removeRow(row.id)}>×</button>
                   )}
