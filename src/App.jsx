@@ -130,7 +130,7 @@ function App() {
   };
 
   const swapTopic = async (e, index) => {
-    e.preventDefault(); // STOP page reload
+    e.preventDefault(); 
     e.stopPropagation();
 
     const { data } = await supabase.from('questions').select('*');
@@ -139,7 +139,7 @@ function App() {
       const generated = runGenerator(randomQ.generator_code);
       
       const newCards = [...cards];
-      // STRICT REPLACEMENT: Only update this one index
+      // STRICT REPLACEMENT of the single card
       newCards[index] = { 
         ...randomQ, 
         id: `swap-${Math.random()}`, 
@@ -251,17 +251,15 @@ function App() {
           <span className="date-display">{dateStr}</span>
         </div>
 
+        {/* --- GRID STARTS HERE (Ensure this appears only ONCE) --- */}
         <div className="questions-grid">
           {cards.map((card, index) => (
             <div key={card.id || index} className="question-card">
               <div className="card-header">
                 <div className="card-number">{index + 1}</div>
-                
-                {/* Topic Title with Hover Effect */}
                 <div className="card-topic" title={card.topic}>
                   {card.isReview ? "↺ " : ""}{card.topic}
                 </div>
-                
                 <div className="card-actions">
                   <div className="zoom-controls">
                     <button className="zoom-btn" type="button" onClick={(e) => changeFontSize(e, index, -0.2)}>-</button>
@@ -269,7 +267,6 @@ function App() {
                   </div>
                   {!card.isReview && (
                     <>
-                      {/* FIXED BUTTONS: type="button" prevents reload */}
                       <button className="card-btn" type="button" onClick={(e) => refreshCard(e, index)}>REFRESH</button>
                       <button className="card-btn" type="button" onClick={(e) => swapTopic(e, index)}>CHANGE TOPIC</button>
                     </>
@@ -292,6 +289,7 @@ function App() {
             </div>
           ))}
         </div>
+        {/* --- GRID ENDS HERE --- */}
       </main>
 
       {showSaveModal && (
