@@ -43,6 +43,15 @@ const MessageIcon = () => (
   </svg>
 );
 
+// New Sidebar Toggle Icon (Panel Left/Right)
+const SidebarToggleIcon = ({ collapsed }) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+    <path d="M9 3v18" />
+    {collapsed ? <path d="m15 9 3 3-3 3" /> : <path d="m15 9-3 3 3 3" />}
+  </svg>
+);
+
 export default function Sidebar({ 
   currentView, 
   onNavigate, 
@@ -86,8 +95,8 @@ export default function Sidebar({
           {!collapsed && <span className="logo-text">Engram</span>}
         </div>
         {!isMobile && (
-          <button className="collapse-btn" onClick={onToggleCollapse}>
-            {collapsed ? '→' : '←'}
+          <button className="collapse-btn" onClick={onToggleCollapse} title={collapsed ? "Expand" : "Collapse"}>
+            <SidebarToggleIcon collapsed={collapsed} />
           </button>
         )}
         {isMobile && (
@@ -141,6 +150,7 @@ export default function Sidebar({
           z-index: 1000;
           transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           font-family: var(--font-ui);
+          box-shadow: 4px 0 24px rgba(0,0,0,0.1); /* Subtle shadow for depth */
         }
 
         .sidebar.collapsed { width: 80px; }
@@ -149,10 +159,21 @@ export default function Sidebar({
 
         .sidebar-header {
           padding: 20px;
+          height: 70px; /* Locked height to prevent shifting */
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: space-between; /* Keeps logo left, button right */
           border-bottom: 1px solid rgba(255,255,255,0.05);
+          overflow: hidden; /* Prevents overflow content */
+        }
+
+        .logo {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          cursor: pointer;
+          flex-shrink: 0; /* Prevents logo from squishing */
+          white-space: nowrap; /* Prevents text from wrapping under logo */
         }
 
         .logo-mark {
@@ -168,6 +189,7 @@ export default function Sidebar({
           font-weight: 700;
           font-size: 1.2rem;
           box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
+          flex-shrink: 0;
         }
 
         .logo-text {
@@ -175,7 +197,34 @@ export default function Sidebar({
           font-weight: 700;
           font-size: 1.3rem;
           color: white;
-          margin-left: 10px;
+          /* Removed margin-left to rely on gap */
+        }
+
+        .collapse-btn {
+          background: transparent;
+          border: none;
+          color: rgba(255,255,255,0.4);
+          width: 28px;
+          height: 28px;
+          border-radius: 6px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+
+        .collapse-btn:hover {
+          background: rgba(255,255,255,0.1);
+          color: white;
+        }
+
+        .close-btn {
+          background: transparent;
+          border: none;
+          color: white;
+          font-size: 1.5rem;
+          cursor: pointer;
         }
 
         .sidebar-nav {
@@ -184,6 +233,7 @@ export default function Sidebar({
           display: flex;
           flex-direction: column;
           gap: 4px;
+          overflow-x: hidden; /* Hides horizontal overflow during collapse */
         }
 
         .nav-item {
@@ -198,6 +248,7 @@ export default function Sidebar({
           transition: all 0.2s ease;
           color: rgba(255,255,255,0.6);
           text-align: left;
+          white-space: nowrap; /* Prevents text wrap during transition */
         }
 
         .nav-icon-container {
@@ -205,6 +256,9 @@ export default function Sidebar({
           transition: color 0.2s ease;
           flex-shrink: 0;
           display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
         }
 
         .nav-item:hover {
@@ -225,12 +279,18 @@ export default function Sidebar({
           color: #5eead4;
         }
 
+        .nav-text {
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
         .nav-label { font-weight: 600; font-size: 0.9rem; display: block; }
         .nav-desc { font-size: 0.7rem; color: rgba(255,255,255,0.3); display: block; }
 
-        .sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,0.05); }
-        .user-section { display: flex; align-items: center; gap: 12px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 12px; }
-        .user-avatar { width: 32px; height: 32px; background: var(--accent); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; }
+        .sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+        .user-section { display: flex; align-items: center; gap: 12px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 12px; white-space: nowrap; }
+        .user-avatar { width: 32px; height: 32px; background: var(--accent); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
         .user-name { font-weight: 600; font-size: 0.8rem; color: white; display: block; }
         .user-role { font-size: 0.65rem; color: rgba(255,255,255,0.4); display: block; }
       `}</style>
