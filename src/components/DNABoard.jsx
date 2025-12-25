@@ -11,9 +11,9 @@ const MathDisplay = ({ text, fontSize }) => {
     // Don't process if already has \text{} commands
     if (input.includes('\\text{')) return input;
     
-    // Match sequences of letters (words) that aren't part of LaTeX commands
-    // This regex finds words but avoids things like \times, \div, \frac, etc.
-    return input.replace(/(?<!\\)([A-Za-z]{2,})/g, '\\text{$1}');
+    // Wrap any word (2+ letters) in \text{} unless it's a LaTeX command (preceded by \)
+    // This makes words render upright instead of italic
+    return input.replace(/(?<!\\)\b([A-Za-z][A-Za-z]+)\b/g, '\\text{$1}');
   };
 
   useEffect(() => {
