@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../supabase';
+import { Icon } from './Icons';
 
 export default function Feedback({ onNavigate }) {
   const [feedbackType, setFeedbackType] = useState('feature');
@@ -36,62 +37,62 @@ export default function Feedback({ onNavigate }) {
   return (
     <div className="feedback-page">
       <header className="page-header">
-        <h1>💬 Feedback & Suggestions</h1>
+        <h1><Icon name="message" size={28} style={{marginRight:'10px'}} /> Feedback & Suggestions</h1>
         <p>Help us improve Engram for teachers everywhere</p>
       </header>
 
       {/* Feature Roadmap */}
       <section className="roadmap-section">
-        <h2>🗺️ Feature Roadmap</h2>
+        <h2><Icon name="chart" size={22} /> Feature Roadmap</h2>
         <p className="section-desc">Here's what we're working on and considering</p>
         
         <div className="roadmap-grid">
           <div className="roadmap-column">
-            <h3>🚀 Coming Soon</h3>
+            <h3><Icon name="rocket" size={16} /> Coming Soon</h3>
             <div className="roadmap-items">
               <div className="roadmap-item done">
-                <span className="status">✓</span>
+                <span className="status"><Icon name="check" size={14} /></span>
                 <span>Dashboard with class summaries</span>
               </div>
               <div className="roadmap-item done">
-                <span className="status">✓</span>
+                <span className="status"><Icon name="check" size={14} /></span>
                 <span>Share board links</span>
               </div>
               <div className="roadmap-item in-progress">
-                <span className="status">🔨</span>
+                <span className="status"><Icon name="edit" size={14} /></span>
                 <span>Separate teacher logins</span>
               </div>
               <div className="roadmap-item in-progress">
-                <span className="status">🔨</span>
+                <span className="status"><Icon name="edit" size={14} /></span>
                 <span>Topic performance tracking</span>
               </div>
             </div>
           </div>
 
           <div className="roadmap-column">
-            <h3>📋 Planned</h3>
+            <h3><Icon name="chart" size={16} /> Planned</h3>
             <div className="roadmap-items">
               <div className="roadmap-item">
-                <span className="status">○</span>
+                <span className="status"><Icon name="target" size={14} /></span>
                 <span>Mobile-responsive design improvements</span>
               </div>
               <div className="roadmap-item">
-                <span className="status">○</span>
+                <span className="status"><Icon name="target" size={14} /></span>
                 <span>Add questions directly in app</span>
               </div>
               <div className="roadmap-item">
-                <span className="status">○</span>
+                <span className="status"><Icon name="target" size={14} /></span>
                 <span>Search in topic dropdown</span>
               </div>
               <div className="roadmap-item">
-                <span className="status">○</span>
+                <span className="status"><Icon name="target" size={14} /></span>
                 <span>Shadow board (student view)</span>
               </div>
             </div>
           </div>
 
           <div className="roadmap-column">
-            <h3>💭 Considering</h3>
+            <h3><Icon name="bulb" size={16} /> Considering</h3>
             <div className="roadmap-items">
               <div className="roadmap-item">
                 <span className="status">?</span>
@@ -116,11 +117,11 @@ export default function Feedback({ onNavigate }) {
 
       {/* Feedback Form */}
       <section className="feedback-section">
-        <h2>📝 Submit Feedback</h2>
+        <h2><Icon name="edit" size={22} /> Submit Feedback</h2>
         
         {submitted ? (
           <div className="success-message">
-            <span className="success-icon">🎉</span>
+            <span className="success-icon"><Icon name="sparkles" size={48} /></span>
             <h3>Thank you!</h3>
             <p>Your feedback has been submitted. We really appreciate it!</p>
             <button onClick={() => setSubmitted(false)}>Submit Another</button>
@@ -135,28 +136,28 @@ export default function Feedback({ onNavigate }) {
                   className={feedbackType === 'feature' ? 'active' : ''}
                   onClick={() => setFeedbackType('feature')}
                 >
-                  💡 Feature Request
+                  <><Icon name="bulb" size={16} /> Feature Request</>
                 </button>
                 <button
                   type="button"
                   className={feedbackType === 'bug' ? 'active' : ''}
                   onClick={() => setFeedbackType('bug')}
                 >
-                  🐛 Bug Report
+                  <><Icon name="bug" size={16} /> Bug Report</>
                 </button>
                 <button
                   type="button"
                   className={feedbackType === 'question' ? 'active' : ''}
                   onClick={() => setFeedbackType('question')}
                 >
-                  ❓ Question Idea
+                  <><Icon name="help" size={16} /> Question Idea</>
                 </button>
                 <button
                   type="button"
                   className={feedbackType === 'other' ? 'active' : ''}
                   onClick={() => setFeedbackType('other')}
                 >
-                  💬 Other
+                  <><Icon name="message" size={16} /> Other</>
                 </button>
               </div>
             </div>
@@ -196,7 +197,7 @@ export default function Feedback({ onNavigate }) {
 
       {/* Help Section */}
       <section className="help-section">
-        <h2>❓ Quick Help</h2>
+        <h2><Icon name="help" size={22} /> Quick Help</h2>
         <div className="help-cards">
           <div className="help-card">
             <h4>How do I add new questions?</h4>
