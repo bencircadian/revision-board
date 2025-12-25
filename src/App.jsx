@@ -130,8 +130,19 @@ function App() {
     if (data && data.length > 0) {
       const randomQ = data[Math.floor(Math.random() * data.length)];
       const generated = runGenerator(randomQ.generator_code);
+      
+      // STRICT REPLACEMENT LOGIC
       const newCards = [...cards];
-      newCards[index] = { ...randomQ, id: `swap-${Math.random()}`, currentQ: generated.q, currentA: generated.a, revealed: false, fontSize: 1.4, isReview: false };
+      newCards[index] = { 
+        ...randomQ, 
+        id: `swap-${Math.random()}`, // New ID forces React to re-render this slot
+        currentQ: generated.q, 
+        currentA: generated.a, 
+        revealed: false, 
+        fontSize: 1.4, 
+        isReview: false 
+      };
+      
       const newRatings = { ...ratings }; delete newRatings[index]; setRatings(newRatings);
       setCards(newCards);
     }
@@ -246,7 +257,6 @@ function App() {
                   </div>
                   {!card.isReview && (
                     <>
-                      {/* UPDATED: Text Buttons */}
                       <button className="card-btn" onClick={() => refreshCard(index)}>REFRESH</button>
                       <button className="card-btn" onClick={() => swapTopic(index)}>CHANGE TOPIC</button>
                     </>
