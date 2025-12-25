@@ -3,36 +3,36 @@ import { supabase } from '../supabase';
 import { Icon } from './Icons';
 
 export default function CreateDNA({ onGenerate, onCancel }) {
-  const [availableTopics, setAvailableTopics] = useState([]);
-  const [selections, setSelections] = useState([{ id: 1, topic: '', difficulty: '••' }]);
+  const [availableSkills, setAvailableSkills] = useState([]);
+  const [selections, setSelections] = useState([{ id: 1, skill: '', difficulty: '••' }]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [topicQuestions, setTopicQuestions] = useState({}); 
+  const [skillQuestions, setSkillQuestions] = useState({}); 
   const [previews, setPreviews] = useState({}); 
 
   useEffect(() => {
-    async function fetchTopics() {
-      const { data } = await supabase.from('questions').select('*').order('topic');
+    async function fetchSkills() {
+      const { data } = await supabase.from('questions').select('*').order('skill_name');
       if (data) {
-        const uniqueTopics = [...new Set(data.map(d => d.topic))].sort();
-        setAvailableTopics(uniqueTopics);
+        const uniqueSkills = [...new Set(data.map(d => d.skill_name))].sort();
+        setAvailableSkills(uniqueSkills);
         
-        const byTopic = {};
+        const bySkill = {};
         data.forEach(q => {
-          if (!byTopic[q.topic]) byTopic[q.topic] = [];
-          byTopic[q.topic].push(q);
+          if (!bySkill[q.skill_name]) bySkill[q.skill_name] = [];
+          bySkill[q.skill_name].push(q);
         });
-        setTopicQuestions(byTopic);
+        setSkillQuestions(bySkill);
         
-        if (uniqueTopics.length > 0) {
-          const firstTopic = uniqueTopics[0];
-          setSelections([{ id: 1, topic: firstTopic, difficulty: '••' }]);
-          generatePreview(1, firstTopic, '••', byTopic);
+        if (uniqueSkills.length > 0) {
+          const firstSkill = uniqueSkills[0];
+          setSelections([{ id: 1, skill: firstSkill, difficulty: '••' }]);
+          generatePreview(1, firstSkill, '••', bySkill);
         }
       }
       setLoading(false);
     }
-    fetchTopics();
+    fetchSkills();
   }, []);
 
   // Helper to normalize difficulty values from database
@@ -44,8 +44,8 @@ export default function CreateDNA({ onGenerate, onCancel }) {
     return '••';
   };
 
-  const generatePreview = (rowId, topic, difficulty, questionsCache = topicQuestions) => {
-    const allQuestions = questionsCache[topic] || [];
+  const generatePreview = (rowId, skill, difficulty, questionsCache = skillQuestions) => {
+    const allQuestions = questionsCache[skill] || [];
     
     // Filter by difficulty
     const matchingQuestions = allQuestions.filter(q => 
@@ -80,29 +80,29 @@ export default function CreateDNA({ onGenerate, onCancel }) {
     }
   };
 
-  const refreshPreview = (rowId, topic, difficulty) => {
-    generatePreview(rowId, topic, difficulty);
+  const refreshPreview = (rowId, skill, difficulty) => {
+    generatePreview(rowId, skill, difficulty);
   };
 
-  const filteredTopics = availableTopics.filter(t => 
-    t.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSkills = availableSkills.filter(s => 
+    s.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const addRow = () => {
     if (selections.length < 6) {
       const newId = Date.now();
-      const newTopic = availableTopics[0];
+      const newSkill = availableSkills[0];
       const newDifficulty = '••';
-      setSelections([...selections, { id: newId, topic: newTopic, difficulty: newDifficulty }]);
-      generatePreview(newId, newTopic, newDifficulty);
+      setSelections([...selections, { id: newId, skill: newSkill, difficulty: newDifficulty }]);
+      generatePreview(newId, newSkill, newDifficulty);
     }
   };
 
   const duplicateRow = (row) => {
     if (selections.length < 6) {
       const newId = Date.now();
-      setSelections([...selections, { id: newId, topic: row.topic, difficulty: row.difficulty }]);
-      generatePreview(newId, row.topic, row.difficulty);
+      setSelections([...selections, { id: newId, skill: row.skill, difficulty: row.difficulty }]);
+      generatePreview(newId, row.skill, row.difficulty);
     }
   };
 
@@ -118,15 +118,15 @@ export default function CreateDNA({ onGenerate, onCancel }) {
   const updateRow = (id, field, value) => {
     setSelections(selections.map(s => s.id === id ? { ...s, [field]: value } : s));
     
-    // Get the current row to access both topic and difficulty
+    // Get the current row to access both skill and difficulty
     const currentRow = selections.find(s => s.id === id);
     
-    if (field === 'topic') {
-      // Topic changed - regenerate with current difficulty
+    if (field === 'skill') {
+      // Skill changed - regenerate with current difficulty
       generatePreview(id, value, currentRow?.difficulty || '••');
     } else if (field === 'difficulty') {
-      // Difficulty changed - regenerate with current topic
-      generatePreview(id, currentRow?.topic, value);
+      // Difficulty changed - regenerate with current skill
+      generatePreview(id, currentRow?.skill, value);
     }
   };
 
@@ -150,7 +150,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
         });
       } else {
         // Fallback: find a matching question
-        const allQuestions = topicQuestions[selection.topic] || [];
+        const allQuestions = skillQuestions[selection.skill] || [];
         const matchingQuestions = allQuestions.filter(q => 
           normalizeDifficulty(q.difficulty) === selection.difficulty
         );
@@ -170,9 +170,9 @@ export default function CreateDNA({ onGenerate, onCancel }) {
         } else {
           generatedCards.push({
             id: `fallback-${Math.random()}`,
-            topic: selection.topic,
+            skill_name: selection.skill,
             difficulty: selection.difficulty,
-            currentQ: `No question found for ${selection.topic}`,
+            currentQ: `No question found for ${selection.skill}`,
             currentA: "-",
             revealed: false,
             fontSize: 1.4
@@ -189,7 +189,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
     try { return new Function(code)() } catch (e) { return { q: "Error", a: "..." } }
   }
 
-  if (loading && availableTopics.length === 0) {
+  if (loading && availableSkills.length === 0) {
     return (
       <div className="loading-container">
         <div className="spinner"></div>
@@ -209,7 +209,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
         <header className="card-header">
           <div>
             <h1><Icon name="dna" size={28} style={{marginRight:'10px', verticalAlign:'middle', color:'var(--primary)'}} /> Create Custom DNA</h1>
-            <p>Select up to 6 topics for your starter board</p>
+            <p>Select up to 6 skills for your starter board</p>
           </div>
           <button className="btn-back" onClick={onCancel}>← Back</button>
         </header>
@@ -219,7 +219,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
           <span className="search-icon"><Icon name="search" size={16} /></span>
           <input
             type="text"
-            placeholder="Search to add topics..."
+            placeholder="Search to add skills..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -228,29 +228,29 @@ export default function CreateDNA({ onGenerate, onCancel }) {
         {/* 2. Search Results / Quick Add */}
         <div className="quick-topics">
           <span className="label">
-            {searchTerm ? `Found ${filteredTopics.length} topics:` : 'Quick add:'}
+            {searchTerm ? `Found ${filteredSkills.length} skills:` : 'Quick add:'}
           </span>
           <div className="topic-chips">
-            {(searchTerm ? filteredTopics : availableTopics.slice(0, 8)).map(topic => (
+            {(searchTerm ? filteredSkills : availableSkills.slice(0, 8)).map(skill => (
               <button
-                key={topic}
-                className={`topic-chip ${selections.some(s => s.topic === topic) ? 'selected' : ''}`}
+                key={skill}
+                className={`topic-chip ${selections.some(s => s.skill === skill) ? 'selected' : ''}`}
                 onClick={() => {
                   if (selections.length < 6) {
                     const newId = Date.now();
                     const newDifficulty = '••';
-                    setSelections([...selections, { id: newId, topic, difficulty: newDifficulty }]);
-                    generatePreview(newId, topic, newDifficulty);
+                    setSelections([...selections, { id: newId, skill, difficulty: newDifficulty }]);
+                    generatePreview(newId, skill, newDifficulty);
                     setSearchTerm('');
                   }
                 }}
                 disabled={selections.length >= 6}
               >
-                {topic}
+                {skill}
               </button>
             ))}
-            {searchTerm && filteredTopics.length === 0 && (
-              <span style={{color: '#94a3b8', fontSize: '0.9rem', fontStyle: 'italic'}}>No matching topics found.</span>
+            {searchTerm && filteredSkills.length === 0 && (
+              <span style={{color: '#94a3b8', fontSize: '0.9rem', fontStyle: 'italic'}}>No matching skills found.</span>
             )}
           </div>
         </div>
@@ -267,12 +267,12 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                   <div className="row-controls">
                     <span className="row-num">{index + 1}</span>
                     <select 
-                      value={row.topic} 
-                      onChange={(e) => updateRow(row.id, 'topic', e.target.value)}
+                      value={row.skill} 
+                      onChange={(e) => updateRow(row.id, 'skill', e.target.value)}
                       className="topic-select"
                     >
-                      {availableTopics.map(t => (
-                        <option key={t} value={t}>{t}</option>
+                      {availableSkills.map(s => (
+                        <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
                     
@@ -311,7 +311,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                       className="btn-duplicate" 
                       onClick={() => duplicateRow(row)}
                       disabled={selections.length >= 6}
-                      title="Duplicate this topic"
+                      title="Duplicate this skill"
                     >
                       <Icon name="copy" size={16} />
                     </button>
@@ -330,7 +330,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                     </div>
                     <button 
                       className="btn-refresh" 
-                      onClick={() => refreshPreview(row.id, row.topic, row.difficulty)}
+                      onClick={() => refreshPreview(row.id, row.skill, row.difficulty)}
                       title="Show different example"
                     >
                       <Icon name="refresh" size={14} />
@@ -347,7 +347,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
               onClick={addRow}
               disabled={selections.length >= 6}
             >
-              {selections.length >= 6 ? '6/6 topics selected' : '+ Add Another Topic'}
+              {selections.length >= 6 ? '6/6 skills selected' : '+ Add Another Skill'}
             </button>
           </div>
         </div>
@@ -363,8 +363,8 @@ export default function CreateDNA({ onGenerate, onCancel }) {
 
         <div className="preview-info">
           <span className="count">{selections.length}/6 questions</span>
-          <span className="topics">
-            Topics: {selections.map(s => s.topic).filter(Boolean).join(', ') || 'None selected'}
+          <span className="skills">
+            Skills: {selections.map(s => s.skill).filter(Boolean).join(', ') || 'None selected'}
           </span>
         </div>
       </div>
@@ -400,7 +400,7 @@ const createDNAStyles = `
   .selection-row { display: flex; gap: 12px; align-items: stretch; background: #fff; border-radius: 12px; padding: 12px; border: 1px solid #e2e8f0; }
   .row-controls { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
   .row-num { width: 28px; height: 28px; background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
-  .topic-select { width: 180px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; background: white; }
+  .topic-select { width: 260px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; background: white; }
   
   /* Difficulty Label Styling */
   .diff-container { display: flex; flex-direction: column; align-items: center; margin: 0 2px; }
@@ -438,6 +438,6 @@ const createDNAStyles = `
   .btn-generate:disabled { opacity: 0.6; cursor: not-allowed; }
   .preview-info { display: flex; justify-content: space-between; padding-top: 16px; border-top: 1px solid #f1f5f9; font-size: 0.85rem; color: #64748b; }
   .preview-info .count { font-weight: 600; color: #0d9488; }
-  .preview-info .topics { text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 400px; }
+  .preview-info .skills { text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 400px; }
   @media (max-width: 768px) { .create-dna-page { padding: 16px; } .create-card { padding: 20px; } .selection-row { flex-direction: column; gap: 10px; } .row-controls { flex-wrap: wrap; } .topic-select { flex: 1; width: auto; } .preview-panel { width: 100%; } .selection-list { min-height: auto; } }
 `;
