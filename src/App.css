@@ -1,4 +1,4 @@
-/* src/App.css - Refined Buttons */
+/* src/App.css - Final Fixes */
 :root {
   --bg: #faf9f7;
   --bg-card: #ffffff;
@@ -12,19 +12,10 @@
 
 /* --- HEADER --- */
 header {
-  padding: 20px 40px;
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
+  padding: 20px 40px; background: var(--bg-card); border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;
 }
-
-@media (min-width: 800px) {
-  header { flex-direction: row; justify-content: space-between; }
-}
+@media (min-width: 800px) { header { flex-direction: row; justify-content: space-between; } }
 
 .logo { display: flex; align-items: center; gap: 10px; cursor: pointer; }
 .logo-mark {
@@ -33,10 +24,8 @@ header {
   font-weight: bold; font-size: 1.2rem;
 }
 .logo-text { font-weight: 700; font-size: 1.4rem; color: var(--accent-1); }
-
 .header-controls { display: flex; gap: 10px; align-items: center; }
 
-/* Buttons */
 .btn {
   padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer;
   font-weight: 600; transition: all 0.2s;
@@ -48,15 +37,9 @@ header {
 
 /* --- MAIN LAYOUT --- */
 main {
-  max-width: 1300px;
-  margin: 0 auto;
-  padding: 40px 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  max-width: 1300px; margin: 0 auto; padding: 40px 20px;
+  display: flex; flex-direction: column; align-items: center;
 }
-
-/* Title Bar */
 .title-bar {
   margin-bottom: 40px; text-align: center; width: 100%;
   display: flex; flex-direction: column; align-items: center; gap: 5px;
@@ -69,159 +52,93 @@ main {
 
 /* --- GRID --- */
 .questions-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 25px;
-  width: 100%;
-  justify-content: center;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px;
+  width: 100%; justify-content: center;
 }
-
-/* Card Styling */
 .question-card {
   background: white; border-radius: 12px; box-shadow: var(--shadow);
   display: flex; flex-direction: column; min-height: 300px;
-  transition: transform 0.2s;
-  overflow: hidden; 
+  transition: transform 0.2s; overflow: hidden; 
 }
 .question-card:hover { transform: translateY(-3px); }
 
-/* --- CARD HEADER --- */
+/* --- CARD HEADER (FIXED TITLE & BUTTONS) --- */
 .card-header {
-  padding: 0 15px; /* Removed vertical padding, handled by line-height/flex */
-  border-bottom: 1px solid #eee;
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between; 
-  background: #fdfdfd;
-  height: 50px; /* Locked height prevents layout jumping */
-  position: relative; /* Needed for the hover effect */
+  padding: 0 15px; border-bottom: 1px solid #eee;
+  display: flex; align-items: center; justify-content: space-between;
+  background: #fdfdfd; height: 50px; position: relative;
 }
 
 .card-number {
-  background: var(--accent-1); 
-  color: white; 
-  width: 24px; 
-  height: 24px;
-  border-radius: 6px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center;
-  font-weight: bold; 
-  font-size: 0.8rem; 
-  margin-right: 10px;
-  flex-shrink: 0; /* Prevents number from squashing */
+  background: var(--accent-1); color: white; width: 24px; height: 24px;
+  border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  font-weight: bold; font-size: 0.8rem; margin-right: 10px; flex-shrink: 0;
 }
 
+/* Title Logic: Truncate normally, expand on hover */
 .card-topic { 
-  font-weight: 700; 
-  color: #444; 
-  font-size: 0.75rem; 
-  text-transform: uppercase; 
-  letter-spacing: 0.5px;
-  flex: 1; 
-  text-align: left;
+  font-weight: 700; color: #444; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;
+  flex: 1; text-align: left; margin-right: 10px;
   
-  /* Default state: Single line with ... */
-  white-space: nowrap; 
-  overflow: hidden; 
-  text-overflow: ellipsis;
-  margin-right: 10px;
-  
-  /* Interaction */
-  cursor: help; /* Shows a ? cursor to indicate you can hover */
-  padding: 15px 0; /* Match header height for easy hovering */
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: help; padding: 15px 0; /* Area to trigger hover */
 }
 
-/* THE HOVER EFFECT */
+/* Hover Effect: Expands to cover buttons */
 .card-topic:hover {
-  position: absolute;
-  left: 45px; /* Offset to clear the number box */
-  right: 5px; /* Stretch to the right edge */
-  background: #fdfdfd; /* Opaque background hides the buttons */
-  z-index: 10; /* Sit on top of buttons */
-  white-space: normal; /* Allow wrapping */
-  overflow: visible;
-  box-shadow: -10px 0 15px -5px #fdfdfd; /* Soft blend on the left */
-  color: var(--accent-2); /* Highlight color when reading */
+  position: absolute; left: 45px; right: 5px; top: 0; bottom: 0;
+  background: #fdfdfd; z-index: 10;
+  white-space: normal; overflow: visible; display: flex; align-items: center;
+  box-shadow: -10px 0 15px -5px #fdfdfd; color: var(--accent-2);
 }
 
-.card-actions { 
-  display: flex; 
-  align-items: center; 
-  gap: 5px; 
-  flex-shrink: 0; /* Locks buttons in place */
-}
-/* Zoom Controls */
+.card-actions { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+
 .zoom-controls {
-  display: flex; gap: 2px; margin-right: 8px; padding-right: 8px;
-  border-right: 1px solid #ddd;
+  display: flex; gap: 2px; margin-right: 8px; padding-right: 8px; border-right: 1px solid #ddd;
 }
 .zoom-btn {
-  width: 28px; height: 28px;
-  display: flex; align-items: center; justify-content: center;
-  border: 1px solid transparent; border-radius: 6px;
-  background: transparent; color: #7f8c8d;
-  cursor: pointer; font-size: 1rem; transition: all 0.2s;
+  width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; border-radius: 4px; background: transparent; color: #7f8c8d;
+  cursor: pointer; font-size: 1rem;
 }
 .zoom-btn:hover { background: #ecf0f1; border-color: #bdc3c7; }
 
-/* REFRESH/SWAP BUTTONS (New Style) */
+/* REFRESH/CHANGE TOPIC TEXT BUTTONS */
 .card-btn {
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.65rem; /* Small & Clean */
-  font-weight: 700;
-  padding: 4px 8px;
-  color: #95a5a6;
-  transition: all 0.2s;
-  letter-spacing: 0.5px;
+  background: white; border: 1px solid #ddd; border-radius: 4px;
+  cursor: pointer; font-size: 0.65rem; font-weight: 700; padding: 4px 8px;
+  color: #95a5a6; transition: all 0.2s; letter-spacing: 0.5px;
 }
-.card-btn:hover {
-  border-color: #bdc3c7;
-  color: #2c3e50;
-  background: #f9f9f9;
-}
+.card-btn:hover { border-color: #bdc3c7; color: #2c3e50; background: #f9f9f9; }
 
 .rated-badge { color: #27ae60; font-weight: bold; margin-left: 5px; }
 
-/* --- CARD CONTENT (Reveal Logic) --- */
+/* --- CARD CONTENT --- */
 .card-content {
   flex: 1; display: flex; align-items: center; justify-content: center;
-  padding: 20px; position: relative; text-align: center;
-  transition: all 0.3s;
+  padding: 20px; position: relative; text-align: center; transition: all 0.3s;
 }
-
-.card-content.revealed-mode .question-text {
-  opacity: 0.5; 
-}
-
+.card-content.revealed-mode .question-text { opacity: 0.5; }
 .question-text { font-size: 1.4rem; font-weight: 500; color: var(--text); width: 100%; transition: opacity 0.3s; }
 
 .answer-overlay {
   position: absolute; inset: 0; background: transparent;
   display: flex; align-items: flex-end; justify-content: center;
-  padding-bottom: 5px; 
-  opacity: 0; pointer-events: none; transition: 0.3s;
+  padding-bottom: 5px; opacity: 0; pointer-events: none; transition: 0.3s;
 }
 .answer-overlay.visible { opacity: 1; pointer-events: auto; }
-
 .answer-overlay-text { 
   font-size: 2rem; font-weight: 800; color: #27ae60;
-  background: rgba(255,255,255,0.95);
-  padding: 8px 20px; border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-  margin-bottom: 0;
+  background: rgba(255,255,255,0.95); padding: 8px 20px; border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15); margin-bottom: 0;
 }
 
 /* --- CARD FOOTER --- */
 .card-footer {
-  padding: 12px 15px; border-top: 1px solid #eee;
+  padding: 12px 15px; border-top: 1px solid #eee; background: #fafafa;
   display: flex; align-items: center; justify-content: space-between;
-  background: #fafafa;
 }
-
 .reveal-btn {
   padding: 6px 12px; background: white; border: 1px solid #ccc;
   border-radius: 6px; font-weight: 600; cursor: pointer; color: #555;
@@ -230,19 +147,14 @@ main {
 
 /* Rating Buttons */
 .perf-buttons { display: flex; gap: 6px; }
-
 .perf-btn {
-  padding: 6px 8px;
-  background: white; border: 1px solid #ccc; border-radius: 6px;
+  padding: 6px 8px; background: white; border: 1px solid #ccc; border-radius: 6px;
   font-weight: 700; font-size: 0.7rem; cursor: pointer; color: #7f8c8d;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s; opacity: 0.7;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s; opacity: 0.7;
 }
 .perf-btn:hover { background: #f5f5f5; border-color: #999; color: #555; opacity: 1; }
 .perf-btn.active { opacity: 1; background: white; border-width: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-
-/* Specific Colors */
-.perf-btn.btn-100.active  { color: #27ae60; border-color: #27ae60; }
+.perf-btn.btn-100.active { color: #27ae60; border-color: #27ae60; }
 .perf-btn.btn-most.active { color: #3498db; border-color: #3498db; }
 .perf-btn.btn-some.active { color: #e67e22; border-color: #e67e22; }
 .perf-btn.btn-nope.active { color: #c0392b; border-color: #c0392b; }
@@ -253,40 +165,34 @@ main {
   min-height: 85vh; text-align: center;
 }
 .home-header { margin-bottom: 50px; }
-
 .logo-large {
   width: 80px; height: 80px; background: var(--accent-1); color: white;
   font-size: 3rem; font-weight: 800; border-radius: 20px;
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto 20px auto; box-shadow: 0 10px 20px rgba(44, 62, 80, 0.3);
 }
-
 .home-header h1 { font-size: 2.5rem; color: var(--accent-1); margin: 0; letter-spacing: -1px; }
 .home-header p { color: #7f8c8d; font-size: 1.2rem; margin-top: 10px; }
-
 .home-actions { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
-
 .big-btn {
   display: flex; align-items: center; gap: 20px; padding: 30px; width: 320px;
   background: white; border: 1px solid var(--border); border-radius: 16px;
-  cursor: pointer; text-align: left; transition: all 0.2s ease;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  cursor: pointer; text-align: left; transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 .big-btn:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); border-color: var(--accent-2); }
 .big-btn .icon { font-size: 3rem; }
 .big-btn .text h3 { margin: 0; font-size: 1.4rem; color: var(--accent-1); }
 .big-btn .text p { margin: 5px 0 0; font-size: 0.9rem; color: #7f8c8d; font-weight: 500; }
 
-/* --- MODAL POPUP --- */
+/* --- MODAL --- */
 .modal-backdrop {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
   display: flex; align-items: center; justify-content: center; z-index: 2000;
 }
 .modal-box {
-  background: white; padding: 30px; border-radius: 16px;
-  width: 90%; max-width: 420px; text-align: center;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 420px;
+  text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
   animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
@@ -300,14 +206,7 @@ main {
 .stat strong { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #95a5a6; margin-bottom: 5px; }
 .stat span { font-size: 2rem; font-weight: 800; line-height: 1; }
 .modal-actions { display: flex; gap: 15px; justify-content: center; }
-.btn-cancel {
-  padding: 12px 24px; background: white; border: 1px solid #ddd;
-  border-radius: 8px; cursor: pointer; font-weight: 600; color: #7f8c8d; font-size: 1rem;
-}
-.btn-cancel:hover { background: #f1f1f1; }
-.btn-confirm {
-  padding: 12px 24px; background: #2c3e50; border: none;
-  border-radius: 8px; cursor: pointer; font-weight: 600; color: white; font-size: 1rem;
-  box-shadow: 0 4px 10px rgba(44, 62, 80, 0.3);
-}
-.btn-confirm:hover { background: #34495e; transform: translateY(-1px); }
+.btn-cancel { padding: 12px 24px; background: white; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-weight: 600; color: #7f8c8d; font-size: 1rem; }
+.btn-confirm { padding: 12px 24px; background: #2c3e50; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; font-size: 1rem; box-shadow: 0 4px 10px rgba(44, 62, 80, 0.3); }
+.media (max-width: 1000px) { .questions-grid { grid-template-columns: repeat(2, 1fr); } }
+.media (max-width: 600px) { .questions-grid { grid-template-columns: 1fr; } }
