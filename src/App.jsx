@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react'
-import Dashboard from './components/Dashboard'
-import DNABoard from './components/DNABoard'
-import CreateDNA from './components/CreateDNA'
-import ClassSelector from './components/ClassSelector'
-import CreateClass from './components/CreateClass'
-import TopicsQuestions from './components/TopicsQuestions'
-import SharedDNAs from './components/SharedDNAs'
-import Feedback from './components/Feedback'
+import { useEffect, useState, Suspense, lazy } from 'react'
 import Sidebar from './components/Sidebar'
 import { Icon } from './components/Icons'
 import './App.css'
+
+// Lazy load components to improve initial load time
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const DNABoard = lazy(() => import('./components/DNABoard'));
+const CreateDNA = lazy(() => import('./components/CreateDNA'));
+const ClassSelector = lazy(() => import('./components/ClassSelector'));
+const CreateClass = lazy(() => import('./components/CreateClass'));
+const TopicsQuestions = lazy(() => import('./components/TopicsQuestions'));
+const SharedDNAs = lazy(() => import('./components/SharedDNAs'));
+const Feedback = lazy(() => import('./components/Feedback'));
 
 function App() {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -78,7 +80,13 @@ function App() {
       )}
 
       <main className="main-content">
-        {renderContent()}
+        <Suspense fallback={
+          <div className="loading-container">
+            <div className="spinner"></div>
+          </div>
+        }>
+          {renderContent()}
+        </Suspense>
       </main>
     </div>
   );
