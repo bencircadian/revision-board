@@ -13,15 +13,29 @@ export default function CreateDNA({ onGenerate, onCancel }) {
   const [selections, setSelections] = useState([{ id: 1, topic: '', difficulty: '••' }]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [topicQuestions, setTopicQuestions] = useState({}); // Cache of questions by topic
+  const [previews, setPreviews] = useState({}); // Preview for each row
 
   useEffect(() => {
     async function fetchTopics() {
-      const { data } = await supabase.from('questions').select('topic');
+      const { data } = await supabase.from('questions').select('*').order('topic');
       if (data) {
         const uniqueTopics = [...new Set(data.map(d => d.topic))].sort();
         setAvailableTopics(uniqueTopics);
+        
+        // Cache questions by topic
+        const byTopic = {};
+        data.forEach(q => {
+          if (!byTopic[q.topic]) byTopic[q.topic] = [];
+          byTopic[q.topic].push(q);
+        });
+        setTopicQuestions(byTopic);
+        
         if (uniqueTopics.length > 0) {
-          setSelections([{ id: 1, topic: uniqueTopics[0], difficulty: '••' }]);
+          const firstTopic = uniqueTopics[0];
+          setSelections([{ id: 1, topic: firstTopic, difficulty: '••' }]);
+          // Generate initial preview
+          generatePreview(1, firstTopic, byTopic);
         }
       }
       setLoading(false);
@@ -29,20 +43,62 @@ export default function CreateDNA({ onGenerate, onCancel }) {
     fetchTopics();
   }, []);
 
+  const generatePreview = (rowId, topic, questionsCache = topicQuestions) => {
+    const questions = questionsCache[topic];
+    if (questions && questions.length > 0) {
+      const randomQ = questions[Math.floor(Math.random() * questions.length)];
+      const generated = runGenerator(randomQ.generator_code);
+      setPreviews(prev => ({
+        ...prev,
+        [rowId]: { q: generated.q, a: generated.a }
+      }));
+    } else {
+      setPreviews(prev => ({
+        ...prev,
+        [rowId]: { q: 'No questions available', a: '-' }
+      }));
+    }
+  };
+
+  const refreshPreview = (rowId, topic) => {
+    generatePreview(rowId, topic);
+  };
+
   const filteredTopics = availableTopics.filter(t => 
     t.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const addRow = () => {
     if (selections.length < 6) {
-      setSelections([...selections, { id: Date.now(), topic: availableTopics[0], difficulty: '••' }]);
+      const newId = Date.now();
+      const newTopic = availableTopics[0];
+      setSelections([...selections, { id: newId, topic: newTopic, difficulty: '••' }]);
+      generatePreview(newId, newTopic);
     }
   };
 
-  const removeRow = (id) => setSelections(selections.filter(s => s.id !== id));
+  const duplicateRow = (row) => {
+    if (selections.length < 6) {
+      const newId = Date.now();
+      setSelections([...selections, { id: newId, topic: row.topic, difficulty: row.difficulty }]);
+      generatePreview(newId, row.topic);
+    }
+  };
+
+  const removeRow = (id) => {
+    setSelections(selections.filter(s => s.id !== id));
+    setPreviews(prev => {
+      const newPreviews = { ...prev };
+      delete newPreviews[id];
+      return newPreviews;
+    });
+  };
 
   const updateRow = (id, field, value) => {
     setSelections(selections.map(s => s.id === id ? { ...s, [field]: value } : s));
+    if (field === 'topic') {
+      generatePreview(id, value);
+    }
   };
 
   const handleGenerate = async () => {
@@ -50,9 +106,9 @@ export default function CreateDNA({ onGenerate, onCancel }) {
     let generatedCards = [];
     
     for (const selection of selections) {
-      const { data } = await supabase.from('questions').select('*').eq('topic', selection.topic);
-      if (data && data.length > 0) {
-        const randomQ = data[Math.floor(Math.random() * data.length)];
+      const questions = topicQuestions[selection.topic];
+      if (questions && questions.length > 0) {
+        const randomQ = questions[Math.floor(Math.random() * questions.length)];
         const generated = runGenerator(randomQ.generator_code);
         generatedCards.push({
           ...randomQ,
@@ -119,51 +175,93 @@ export default function CreateDNA({ onGenerate, onCancel }) {
           />
         </div>
 
-        {/* Selections */}
-        <div className="selection-list">
-          {selections.map((row, index) => (
-            <div key={row.id} className="selection-row">
-              <span className="row-num">{index + 1}</span>
-              <select 
-                value={row.topic} 
-                onChange={(e) => updateRow(row.id, 'topic', e.target.value)}
-                className="topic-select"
-              >
-                {(searchTerm ? filteredTopics : availableTopics).map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-              <div className="diff-buttons">
-                <button
-                  type="button"
-                  className={`diff-btn ${row.difficulty === '•' ? 'active' : ''}`}
-                  onClick={() => updateRow(row.id, 'difficulty', '•')}
-                  title="Level 1"
-                >
-                  •
-                </button>
-                <button
-                  type="button"
-                  className={`diff-btn ${row.difficulty === '••' ? 'active' : ''}`}
-                  onClick={() => updateRow(row.id, 'difficulty', '••')}
-                  title="Level 2"
-                >
-                  ••
-                </button>
-                <button
-                  type="button"
-                  className={`diff-btn ${row.difficulty === '•••' ? 'active' : ''}`}
-                  onClick={() => updateRow(row.id, 'difficulty', '•••')}
-                  title="Level 3"
-                >
-                  •••
-                </button>
+        {/* Selections - Fixed height container */}
+        <div className="selection-container">
+          <div className="selection-list">
+            {selections.map((row, index) => (
+              <div key={row.id} className="selection-row">
+                <div className="row-controls">
+                  <span className="row-num">{index + 1}</span>
+                  <select 
+                    value={row.topic} 
+                    onChange={(e) => updateRow(row.id, 'topic', e.target.value)}
+                    className="topic-select"
+                  >
+                    {(searchTerm ? filteredTopics : availableTopics).map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                  <div className="diff-buttons">
+                    <button
+                      type="button"
+                      className={`diff-btn ${row.difficulty === '•' ? 'active' : ''}`}
+                      onClick={() => updateRow(row.id, 'difficulty', '•')}
+                      title="Level 1"
+                    >
+                      •
+                    </button>
+                    <button
+                      type="button"
+                      className={`diff-btn ${row.difficulty === '••' ? 'active' : ''}`}
+                      onClick={() => updateRow(row.id, 'difficulty', '••')}
+                      title="Level 2"
+                    >
+                      ••
+                    </button>
+                    <button
+                      type="button"
+                      className={`diff-btn ${row.difficulty === '•••' ? 'active' : ''}`}
+                      onClick={() => updateRow(row.id, 'difficulty', '•••')}
+                      title="Level 3"
+                    >
+                      •••
+                    </button>
+                  </div>
+                  <button 
+                    className="btn-duplicate" 
+                    onClick={() => duplicateRow(row)}
+                    disabled={selections.length >= 6}
+                    title="Duplicate this topic"
+                  >
+                    ⧉
+                  </button>
+                  {selections.length > 1 && (
+                    <button className="btn-remove" onClick={() => removeRow(row.id)}>×</button>
+                  )}
+                </div>
+                
+                {/* Preview Panel */}
+                <div className="preview-panel">
+                  <div className="preview-content">
+                    <div className="preview-question">
+                      <strong>Q:</strong> {previews[row.id]?.q || 'Loading...'}
+                    </div>
+                    <div className="preview-answer">
+                      <strong>A:</strong> {previews[row.id]?.a || '...'}
+                    </div>
+                  </div>
+                  <button 
+                    className="btn-refresh" 
+                    onClick={() => refreshPreview(row.id, row.topic)}
+                    title="Show different example"
+                  >
+                    🔄
+                  </button>
+                </div>
               </div>
-              {selections.length > 1 && (
-                <button className="btn-remove" onClick={() => removeRow(row.id)}>×</button>
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
+
+          {/* Fixed position Add button */}
+          <div className="add-row-container">
+            <button 
+              className="btn-add-row" 
+              onClick={addRow}
+              disabled={selections.length >= 6}
+            >
+              {selections.length >= 6 ? '6/6 topics selected' : '+ Add Another Topic'}
+            </button>
+          </div>
         </div>
 
         {/* Quick Add Topics */}
@@ -175,11 +273,13 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                 key={topic}
                 className={`topic-chip ${selections.some(s => s.topic === topic) ? 'selected' : ''}`}
                 onClick={() => {
-                  if (selections.length < 6 && !selections.some(s => s.topic === topic)) {
-                    setSelections([...selections, { id: Date.now(), topic, difficulty: '••' }]);
+                  if (selections.length < 6) {
+                    const newId = Date.now();
+                    setSelections([...selections, { id: newId, topic, difficulty: '••' }]);
+                    generatePreview(newId, topic);
                   }
                 }}
-                disabled={selections.length >= 6 || selections.some(s => s.topic === topic)}
+                disabled={selections.length >= 6}
               >
                 {topic}
               </button>
@@ -189,12 +289,6 @@ export default function CreateDNA({ onGenerate, onCancel }) {
 
         {/* Actions */}
         <div className="actions">
-          {selections.length < 6 && (
-            <button className="btn-add-row" onClick={addRow}>
-              + Add Another Topic
-            </button>
-          )}
-          
           <div className="main-actions">
             <button className="btn-cancel" onClick={onCancel}>Cancel</button>
             <button className="btn-generate" onClick={handleGenerate} disabled={loading}>
@@ -220,7 +314,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
 const createDNAStyles = `
   .create-dna-page {
     padding: 32px;
-    max-width: 700px;
+    max-width: 900px;
     margin: 0 auto;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
@@ -291,17 +385,34 @@ const createDNAStyles = `
     box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
   }
 
+  /* Fixed height container for selections */
+  .selection-container {
+    margin-bottom: 24px;
+  }
+
   .selection-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin-bottom: 24px;
+    min-height: 420px; /* Fixed height for 6 rows */
+    margin-bottom: 12px;
   }
 
   .selection-row {
     display: flex;
     gap: 12px;
+    align-items: stretch;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .row-controls {
+    display: flex;
+    gap: 8px;
     align-items: center;
+    flex-shrink: 0;
   }
 
   .row-num {
@@ -319,11 +430,11 @@ const createDNAStyles = `
   }
 
   .topic-select {
-    flex: 1;
-    padding: 12px 16px;
+    width: 180px;
+    padding: 10px 12px;
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
     background: white;
   }
 
@@ -333,12 +444,12 @@ const createDNAStyles = `
   }
 
   .diff-btn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border: 2px solid #e2e8f0;
-    border-radius: 8px;
+    border-radius: 6px;
     background: white;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
@@ -359,14 +470,38 @@ const createDNAStyles = `
     border-color: transparent;
   }
 
+  .btn-duplicate {
+    width: 32px;
+    height: 32px;
+    background: #f0fdfa;
+    color: #0d9488;
+    border: 1px solid #99f6e4;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .btn-duplicate:hover:not(:disabled) {
+    background: #ccfbf1;
+  }
+
+  .btn-duplicate:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
   .btn-remove {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     background: #fef2f2;
     color: #dc2626;
     border: 1px solid #fecaca;
-    border-radius: 10px;
-    font-size: 1.2rem;
+    border-radius: 6px;
+    font-size: 1.1rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -376,6 +511,91 @@ const createDNAStyles = `
 
   .btn-remove:hover {
     background: #fee2e2;
+  }
+
+  /* Preview Panel */
+  .preview-panel {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    min-width: 0;
+  }
+
+  .preview-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .preview-question {
+    font-size: 0.85rem;
+    color: #334155;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .preview-answer {
+    font-size: 0.8rem;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .btn-refresh {
+    width: 28px;
+    height: 28px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .btn-refresh:hover {
+    background: #f0fdfa;
+    border-color: #99f6e4;
+  }
+
+  /* Fixed Add Button Container */
+  .add-row-container {
+    height: 52px;
+  }
+
+  .btn-add-row {
+    width: 100%;
+    padding: 14px;
+    background: #f8fafc;
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    color: #64748b;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-add-row:hover:not(:disabled) {
+    background: #f0fdfa;
+    border-color: #99f6e4;
+    color: #0d9488;
+  }
+
+  .btn-add-row:disabled {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    cursor: default;
   }
 
   .quick-topics {
@@ -428,24 +648,6 @@ const createDNAStyles = `
     flex-direction: column;
     gap: 16px;
     margin-bottom: 24px;
-  }
-
-  .btn-add-row {
-    width: 100%;
-    padding: 14px;
-    background: #f8fafc;
-    border: 2px dashed #d1d5db;
-    border-radius: 12px;
-    color: #64748b;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-add-row:hover {
-    background: #f0fdfa;
-    border-color: #99f6e4;
-    color: #0d9488;
   }
 
   .main-actions {
@@ -503,38 +705,38 @@ const createDNAStyles = `
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
-    max-width: 300px;
+    max-width: 400px;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     .create-dna-page {
       padding: 16px;
     }
 
     .create-card {
-      padding: 24px;
+      padding: 20px;
     }
 
     .selection-row {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .row-controls {
       flex-wrap: wrap;
     }
 
     .topic-select {
-      flex: 1 1 100%;
-      order: 1;
-    }
-
-    .diff-buttons {
       flex: 1;
-      order: 2;
+      width: auto;
     }
 
-    .btn-remove {
-      order: 3;
+    .preview-panel {
+      width: 100%;
     }
 
-    .row-num {
-      order: 0;
+    .selection-list {
+      min-height: auto;
     }
   }
 `;
