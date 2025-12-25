@@ -48,7 +48,7 @@ export default function TopicsQuestions({ onNavigate }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ 
-    domain: '', topic: '', skill: '', difficulty: '••', generator_code: '' 
+    domain: '', topic: '', skill_name: '', difficulty: '••', generator_code: '' 
   });
 
   // Card State
@@ -63,7 +63,6 @@ export default function TopicsQuestions({ onNavigate }) {
 
   async function fetchQuestions() {
     setLoading(true);
-    // Fetch everything. We will group it in memory.
     const { data } = await supabase.from('questions').select('*');
     if (data) {
       setQuestions(data);
@@ -79,7 +78,8 @@ export default function TopicsQuestions({ onNavigate }) {
     questions.forEach(q => {
       const d = q.domain || 'Uncategorized';
       const t = q.topic || 'General';
-      const s = q.skill || 'General Skills';
+      // UPDATED: Using skill_name from database
+      const s = q.skill_name || 'General Skills';
 
       if (!groups[d]) groups[d] = {};
       if (!groups[d][t]) groups[d][t] = {};
@@ -94,7 +94,8 @@ export default function TopicsQuestions({ onNavigate }) {
   // Unique lists for Autocomplete
   const uniqueDomains = useMemo(() => Object.keys(groupedData).sort(), [groupedData]);
   const uniqueTopics = useMemo(() => [...new Set(questions.map(q => q.topic).filter(Boolean))].sort(), [questions]);
-  const uniqueSkills = useMemo(() => [...new Set(questions.map(q => q.skill).filter(Boolean))].sort(), [questions]);
+  // UPDATED: Mapping to skill_name
+  const uniqueSkills = useMemo(() => [...new Set(questions.map(q => q.skill_name).filter(Boolean))].sort(), [questions]);
 
   // --- SEARCH FILTERING ---
 
@@ -103,7 +104,7 @@ export default function TopicsQuestions({ onNavigate }) {
     const lowerQ = searchQuery.toLowerCase();
     return questions.filter(q => 
       (q.topic && q.topic.toLowerCase().includes(lowerQ)) ||
-      (q.skill && q.skill.toLowerCase().includes(lowerQ)) ||
+      (q.skill_name && q.skill_name.toLowerCase().includes(lowerQ)) ||
       (q.domain && q.domain.toLowerCase().includes(lowerQ)) ||
       (q.generator_code && q.generator_code.toLowerCase().includes(lowerQ))
     );
@@ -124,7 +125,7 @@ export default function TopicsQuestions({ onNavigate }) {
     const payload = {
       domain: formData.domain || null,
       topic: formData.topic,
-      skill: formData.skill || null,
+      skill_name: formData.skill_name || null, // UPDATED field name
       difficulty: formData.difficulty,
       generator_code: formData.generator_code
     };
@@ -152,7 +153,7 @@ export default function TopicsQuestions({ onNavigate }) {
     setFormData({
       domain: q.domain || '',
       topic: q.topic || '',
-      skill: q.skill || '',
+      skill_name: q.skill_name || '', // UPDATED
       difficulty: q.difficulty || '••',
       generator_code: q.generator_code || ''
     });
@@ -161,7 +162,7 @@ export default function TopicsQuestions({ onNavigate }) {
 
   const openCreateModal = () => {
     setEditingId(null);
-    setFormData({ domain: '', topic: '', skill: '', difficulty: '••', generator_code: '' });
+    setFormData({ domain: '', topic: '', skill_name: '', difficulty: '••', generator_code: '' });
     setShowAddModal(true);
   };
 
@@ -269,9 +270,19 @@ export default function TopicsQuestions({ onNavigate }) {
                           {isTopicOpen && (
                             <div className="topic-content">
                               {Object.keys(skillsInTopic).sort().map(skill => {
+                                const questionsInSkill = skillsInTopic[skill];
+                                
+                                // Flatten if truly missing/general
+                                if (skill === 'General Skills') {
+                                  return (
+                                    <div key={skill} className="questions-grid inside-skill" style={{paddingTop:'8px', paddingBottom:'16px'}}>
+                                      {questionsInSkill.map(q => renderQuestionCard(q))}
+                                    </div>
+                                  );
+                                }
+
                                 const skillKey = `${topicKey}-${skill}`;
                                 const isSkillOpen = expandedSkills[skillKey];
-                                const questionsInSkill = skillsInTopic[skill];
 
                                 return (
                                   <div key={skillKey} className="skill-section">
@@ -328,7 +339,8 @@ export default function TopicsQuestions({ onNavigate }) {
             <div className="form-row">
               <div className="form-group half">
                 <label>Skill</label>
-                <input list="skills" type="text" placeholder="e.g. Factorising" value={formData.skill} onChange={e => setFormData({...formData, skill: e.target.value})} />
+                {/* UPDATED: Binding to skill_name */}
+                <input list="skills" type="text" placeholder="e.g. Factorising" value={formData.skill_name} onChange={e => setFormData({...formData, skill_name: e.target.value})} />
                 <datalist id="skills">{uniqueSkills.map(s => <option key={s} value={s} />)}</datalist>
               </div>
               <div className="form-group half">
