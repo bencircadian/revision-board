@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabase';
+import { Icon } from './Icons';
 
 export default function ClassSelector({ onSelectClass, onCreateNew }) {
   const [classes, setClasses] = useState([]);
@@ -44,12 +45,13 @@ export default function ClassSelector({ onSelectClass, onCreateNew }) {
     return (
       <div className="selector-page">
         <header className="page-header">
-          <h1>🎓 My Classes</h1>
+          {/* REPLACED: Emoji with Icon */}
+          <h1><Icon name="hat" size={32} style={{marginRight: '12px', color: 'var(--primary)'}} /> My Classes</h1>
           <p>Choose a class to start a DNA session</p>
         </header>
         <div className="class-grid">
           <button className="class-card create-btn" onClick={onCreateNew}>
-            <div className="plus">+</div>
+            <div className="plus"><Icon name="plus" size={40} /></div>
             <span>Create New Class</span>
           </button>
           {[1, 2, 3].map(i => (
@@ -69,17 +71,18 @@ export default function ClassSelector({ onSelectClass, onCreateNew }) {
     <div className="selector-page">
       <header className="page-header">
         <div>
-          <h1>🎓 My Classes</h1>
+          {/* REPLACED: Emoji with Icon */}
+          <h1><Icon name="hat" size={32} style={{marginRight: '12px', color: 'var(--primary)'}} /> My Classes</h1>
           <p>Choose a class to start a DNA session</p>
         </div>
         <button className="btn-create" onClick={onCreateNew}>
-          + New Class
+          <Icon name="plus" size={18} style={{marginRight: '6px'}} /> New Class
         </button>
       </header>
 
       {error && (
         <div className="error-banner">
-          <span>⚠️ Could not load classes</span>
+          <span><Icon name="alert" size={18} /> Could not load classes. </span>
           <button onClick={fetchClasses}>Retry</button>
         </div>
       )}
@@ -87,7 +90,7 @@ export default function ClassSelector({ onSelectClass, onCreateNew }) {
       <div className="class-grid">
         {/* Create New Button */}
         <button className="class-card create-btn" onClick={onCreateNew}>
-          <div className="plus">+</div>
+          <div className="plus"><Icon name="plus" size={40} /></div>
           <span>Create New Class</span>
         </button>
 
@@ -116,6 +119,7 @@ export default function ClassSelector({ onSelectClass, onCreateNew }) {
         {/* Empty state */}
         {classes.length === 0 && !error && (
           <div className="empty-state">
+            <Icon name="hat" size={48} style={{color: '#cbd5e1', marginBottom: '16px'}} />
             <p>No classes yet. Create your first class to get started!</p>
           </div>
         )}
@@ -146,6 +150,8 @@ const selectorStyles = `
     font-weight: 700;
     color: #1e293b;
     margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
   }
 
   .page-header p {
@@ -162,6 +168,8 @@ const selectorStyles = `
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+    display: flex;
+    align-items: center;
   }
 
   .btn-create:hover {
@@ -179,6 +187,12 @@ const selectorStyles = `
     display: flex;
     align-items: center;
     justify-content: space-between;
+  }
+
+  .error-banner span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .error-banner button {
@@ -230,9 +244,13 @@ const selectorStyles = `
   }
 
   .plus {
-    font-size: 3rem;
-    font-weight: 300;
+    color: #cbd5e1;
     margin-bottom: 12px;
+    transition: color 0.2s;
+  }
+  
+  .create-btn:hover .plus {
+    color: #0d9488;
   }
 
   .existing {
@@ -346,6 +364,10 @@ const selectorStyles = `
     background: #f8fafc;
     border-radius: 16px;
     border: 2px dashed #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
 
   @media (max-width: 768px) {
@@ -360,6 +382,7 @@ const selectorStyles = `
 
     .btn-create {
       width: 100%;
+      justify-content: center;
     }
 
     .class-grid {
