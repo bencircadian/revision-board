@@ -217,13 +217,36 @@ main {
   padding: 5px 8px; background: white; border: 1px solid #CBD5E1; border-radius: 6px;
   font-weight: 700; font-size: 0.65rem; cursor: pointer; color: #94A3B8;
   display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  font-weight: 800; /* Keeps the text bold and clear for your snips */
+  text-transform: uppercase;
+  transition: all 0.2s ease;
 }
 .perf-btn:hover { background: #F8FAFC; border-color: #64748B; color: #475569; }
 .perf-btn.active { background: white; border-width: 2px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-.perf-btn.btn-100.active  { color: var(--primary); border-color: var(--primary); }
-.perf-btn.btn-most.active { color: var(--accent); border-color: var(--accent); }
-.perf-btn.btn-some.active { color: #F59E0B; border-color: #F59E0B; }
-.perf-btn.btn-nope.active { color: #EF4444; border-color: #EF4444; }
+.perf-btn.btn-100.active { 
+  background-color: #16a34a !important; 
+  border-color: #15803d !important; 
+  color: white !important; 
+  opacity: 1;
+}
+.perf-btn.btn-most.active { 
+  background-color: #86efac !important; 
+  border-color: #4ade80 !important; 
+  color: #14532d !important; 
+  opacity: 1;
+}
+.perf-btn.btn-some.active { 
+  background-color: #fde047 !important; 
+  border-color: #facc15 !important; 
+  color: #713f12 !important; 
+  opacity: 1;
+}
+.perf-btn.btn-nope.active { 
+  background-color: #ef4444 !important; 
+  border-color: #dc2626 !important; 
+  color: white !important; 
+  opacity: 1;
+}
 
 /* --- HOME SCREEN --- */
 .home-container {
