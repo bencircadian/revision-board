@@ -1,23 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
+
 :root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color-scheme: light;
   color: #2c3e50;
-  background-color: #faf9f7;
+  background-color: #F8FAFC;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: start; /* Changed from center to start so scrolling works */
   min-width: 320px;
   min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 #root {
   width: 100%;
   max-width: 100%;
-  margin: 0 auto;
-  text-align: center; /* Forces text centering by default */
+  min-height: 100vh;
 }
