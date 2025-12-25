@@ -108,13 +108,17 @@ function App() {
 
   // --- CARD ACTIONS ---
 
-  const changeFontSize = (index, delta) => {
+  const changeFontSize = (e, index, delta) => {
+    e.stopPropagation(); // Stop click from hitting anything else
     const newCards = [...cards];
     newCards[index].fontSize = Math.max(0.5, Math.min(5.0, newCards[index].fontSize + delta));
     setCards(newCards);
   };
 
-  const refreshCard = (index) => {
+  const refreshCard = (e, index) => {
+    e.preventDefault(); // Stop page reload
+    e.stopPropagation();
+    
     const newCards = [...cards];
     const card = newCards[index];
     if (card.generator_code) {
@@ -125,17 +129,20 @@ function App() {
     } else { alert("This is a fixed review card, it cannot be refreshed."); }
   };
 
-  const swapTopic = async (index) => {
+  const swapTopic = async (e, index) => {
+    e.preventDefault(); // Stop page reload
+    e.stopPropagation();
+
     const { data } = await supabase.from('questions').select('*');
     if (data && data.length > 0) {
       const randomQ = data[Math.floor(Math.random() * data.length)];
       const generated = runGenerator(randomQ.generator_code);
       
-      // STRICT REPLACEMENT LOGIC
       const newCards = [...cards];
+      // STRICT REPLACEMENT: Only update this one index
       newCards[index] = { 
         ...randomQ, 
-        id: `swap-${Math.random()}`, // New ID forces React to re-render this slot
+        id: `swap-${Math.random()}`, 
         currentQ: generated.q, 
         currentA: generated.a, 
         revealed: false, 
@@ -249,16 +256,22 @@ function App() {
             <div key={card.id || index} className="question-card">
               <div className="card-header">
                 <div className="card-number">{index + 1}</div>
-                <span className="card-topic">{card.isReview ? "↺ " : ""}{card.topic}</span>
+                
+                {/* Topic Title with Hover Effect */}
+                <div className="card-topic" title={card.topic}>
+                  {card.isReview ? "↺ " : ""}{card.topic}
+                </div>
+                
                 <div className="card-actions">
                   <div className="zoom-controls">
-                    <button className="zoom-btn" onClick={() => changeFontSize(index, -0.2)} title="Smaller Text">-</button>
-                    <button className="zoom-btn" onClick={() => changeFontSize(index, 0.2)} title="Bigger Text">+</button>
+                    <button className="zoom-btn" type="button" onClick={(e) => changeFontSize(e, index, -0.2)}>-</button>
+                    <button className="zoom-btn" type="button" onClick={(e) => changeFontSize(e, index, 0.2)}>+</button>
                   </div>
                   {!card.isReview && (
                     <>
-                      <button className="card-btn" onClick={() => refreshCard(index)}>REFRESH</button>
-                      <button className="card-btn" onClick={() => swapTopic(index)}>CHANGE TOPIC</button>
+                      {/* FIXED BUTTONS: type="button" prevents reload */}
+                      <button className="card-btn" type="button" onClick={(e) => refreshCard(e, index)}>REFRESH</button>
+                      <button className="card-btn" type="button" onClick={(e) => swapTopic(e, index)}>CHANGE TOPIC</button>
                     </>
                   )}
                   {ratings[index] !== undefined && <span className="rated-badge">✓</span>}
@@ -274,7 +287,7 @@ function App() {
 
               <div className="card-footer" style={{ justifyContent: 'space-between' }}>
                 {renderPerformanceButtons(index)}
-                <button className="reveal-btn" onClick={() => toggleReveal(index)}>{card.revealed ? 'Hide' : 'Reveal'}</button>
+                <button className="reveal-btn" type="button" onClick={() => toggleReveal(index)}>{card.revealed ? 'Hide' : 'Reveal'}</button>
               </div>
             </div>
           ))}
