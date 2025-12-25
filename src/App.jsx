@@ -294,7 +294,10 @@ function App() {
   return (
     <div>
       <header>
-        <div className="logo" onClick={goHome}><div className="logo-mark">R</div><span className="logo-text">Revision Board</span></div>
+        <div className="logo" onClick={goHome}>
+    <div className="logo-mark">E</div>
+    <span className="logo-text">Engram</span>
+  </div>
         <div className="header-controls">
           {currentClass && <span style={{marginRight:10, fontWeight:'bold', color:'#2c3e50'}}>{currentClass.name}</span>}
           <button className="btn btn-secondary" onClick={() => setRatings({})}>Reset</button>
