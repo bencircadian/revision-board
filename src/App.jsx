@@ -40,6 +40,11 @@ function App() {
     setDateStr(new Date().toLocaleDateString('en-GB', options));
   }, []);
 
+  // DEBUG: Log whenever cards change
+  useEffect(() => {
+    console.log('Cards updated, count:', cards.length, cards.map(c => c.topic));
+  }, [cards]);
+
   // --- NAVIGATION ---
   const goHome = () => { setView('home'); setCards([]); setRatings({}); setCurrentClass(null); };
   const startClassSelection = () => setView('selector');
@@ -49,6 +54,7 @@ function App() {
 
   // --- DATA & GENERATORS ---
   async function fetchAndInitCards(classObj) {
+    console.log('fetchAndInitCards called'); // DEBUG
     setLoading(true);
     const classId = classObj ? classObj.name : "Default Class"; 
 
@@ -93,7 +99,9 @@ function App() {
     ];
 
     // Force max 6 items
-    setCards(finalBoard.slice(0, 6).sort(() => 0.5 - Math.random()));
+    const limitedCards = finalBoard.slice(0, 6).sort(() => 0.5 - Math.random());
+    console.log('Setting initial cards, count:', limitedCards.length); // DEBUG
+    setCards(limitedCards);
     setLoading(false);
   }
 
@@ -120,28 +128,29 @@ function App() {
   };
 
   const refreshCard = (e, index) => {
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault(); 
+    e.stopPropagation();
     
-    // We need to read the card to get the generator code, but update securely
-    // It's safe to read 'cards' here for the *logic*, but we must use prevCards for the *update*
     const cardToRefresh = cards[index]; 
 
-    if (cardToRefresh.generator_code) {
+    if (cardToRefresh && cardToRefresh.generator_code) {
       const generated = runGenerator(cardToRefresh.generator_code);
       
-      setCards(prevCards => prevCards.map((card, i) => {
-        if (i === index) {
-          return {
-            ...card,
-            currentQ: generated.q,
-            currentA: generated.a,
-            revealed: false
-          };
-        }
-        return card;
-      }));
+      setCards(prevCards => {
+        console.log('refreshCard: prevCards length:', prevCards.length); // DEBUG
+        return prevCards.map((card, i) => {
+          if (i === index) {
+            return {
+              ...card,
+              currentQ: generated.q,
+              currentA: generated.a,
+              revealed: false
+            };
+          }
+          return card;
+        });
+      });
 
-      // Reset rating for this specific card
       setRatings(prevRatings => {
         const newR = { ...prevRatings };
         delete newR[index];
@@ -154,31 +163,46 @@ function App() {
   };
 
   const swapTopic = async (e, index) => {
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault(); 
+    e.stopPropagation();
+
+    console.log('swapTopic called for index:', index); // DEBUG
+    console.log('Current cards count BEFORE fetch:', cards.length); // DEBUG
 
     const { data } = await supabase.from('questions').select('*');
+    
+    console.log('Supabase returned, current cards count:', cards.length); // DEBUG
+    
     if (data && data.length > 0) {
       const randomQ = data[Math.floor(Math.random() * data.length)];
       const generated = runGenerator(randomQ.generator_code);
       
-      // Fixed: Using functional update to ensure we replace strictly at the index
-      // regardless of when the async call returns.
-      setCards(prevCards => prevCards.map((card, i) => {
-        if (i === index) {
-          return {
-            ...randomQ,
-            id: `swap-${Math.random()}`, 
-            currentQ: generated.q, 
-            currentA: generated.a, 
-            revealed: false, 
-            fontSize: 1.4, 
-            isReview: false 
-          };
-        }
-        return card;
-      }));
+      const newCard = {
+        ...randomQ,
+        id: `swap-${Date.now()}`, 
+        currentQ: generated.q, 
+        currentA: generated.a, 
+        revealed: false, 
+        fontSize: 1.4, 
+        isReview: false 
+      };
+
+      setCards(prevCards => {
+        console.log('swapTopic setCards: prevCards length:', prevCards.length); // DEBUG
+        
+        // STRICT: Create new array with exact same length
+        const newCards = prevCards.map((card, i) => {
+          if (i === index) {
+            console.log('Replacing card at index', i, 'with topic:', newCard.topic); // DEBUG
+            return newCard;
+          }
+          return card;
+        });
+        
+        console.log('swapTopic setCards: newCards length:', newCards.length); // DEBUG
+        return newCards;
+      });
       
-      // Reset rating
       setRatings(prevRatings => {
         const newR = { ...prevRatings };
         delete newR[index];
@@ -230,7 +254,7 @@ function App() {
 
   // --- RENDER PERFORMANCE BUTTONS ---
   const renderPerformanceButtons = (index) => {
-    if (!cards[index].revealed) return <div style={{color: '#ccc', fontSize: '0.9rem'}}>Reveal to grade</div>;
+    if (!cards[index] || !cards[index].revealed) return <div style={{color: '#ccc', fontSize: '0.9rem'}}>Reveal to grade</div>;
     const currentScore = ratings[index];
     return (
       <div className="perf-buttons">
@@ -272,12 +296,17 @@ function App() {
 
   if (loading) return <div style={{padding: 40}}>Loading Board...</div>;
 
+  // DEBUG: Show card count
+  console.log('Rendering dashboard with', cards.length, 'cards');
+
   return (
     <div>
       <header>
         <div className="logo" onClick={goHome}><div className="logo-mark">R</div><span className="logo-text">Revision Board</span></div>
         <div className="header-controls">
           {currentClass && <span style={{marginRight:10, fontWeight:'bold', color:'#2c3e50'}}>{currentClass.name}</span>}
+          {/* DEBUG: Show card count */}
+          <span style={{marginRight:10, color:'red', fontWeight:'bold'}}>Cards: {cards.length}</span>
           <button className="btn btn-secondary" onClick={() => setRatings({})}>Reset</button>
           <button className="btn btn-secondary" onClick={() => window.print()}>Print</button>
           <button className="btn btn-primary" onClick={goHome}>Exit</button>
@@ -292,11 +321,10 @@ function App() {
 
         <div className="questions-grid">
           {cards.map((card, index) => (
-            <div key={card.id || index} className="question-card">
+            <div key={card.id || `card-${index}`} className="question-card">
               <div className="card-header">
                 <div className="card-number">{index + 1}</div>
                 
-                {/* Topic Title with Hover Effect */}
                 <div className="card-topic" title={card.topic}>
                   {card.isReview ? "↺ " : ""}{card.topic}
                 </div>
