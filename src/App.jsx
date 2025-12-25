@@ -28,6 +28,7 @@ function App() {
   // --- STATE ---
   const [view, setView] = useState('home'); 
   const [currentClass, setCurrentClass] = useState(null);
+  
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(false);
   const [dateStr, setDateStr] = useState("");
@@ -51,9 +52,11 @@ function App() {
     setLoading(true);
     const classId = classObj ? classObj.name : "Default Class"; 
 
+    // 1. Check Spaced Repetition
     const { data: dueCards } = await supabase.rpc('get_due_cards', { p_class_id: classId });
     const reviewQuestions = dueCards || [];
 
+    // 2. Fill remaining slots
     const slotsRemaining = 6 - reviewQuestions.length;
     let newQuestions = [];
 
@@ -63,6 +66,7 @@ function App() {
         const shuffled = dbData.sort(() => 0.5 - Math.random());
         newQuestions = shuffled.slice(0, slotsRemaining);
       }
+      // Fallback
       if (newQuestions.length < slotsRemaining) {
         const placeholders = [
            { topic: 'Algebra', generator_code: `return { q: "Solve $2x=10$", a: "$x=5$" }` },
@@ -88,7 +92,7 @@ function App() {
       })
     ];
 
-    // SAFETY LOCK: Force exact limit of 6 cards
+    // Ensure we only ever have 6 cards max
     setCards(finalBoard.slice(0, 6).sort(() => 0.5 - Math.random()));
     setLoading(false);
   }
@@ -100,53 +104,93 @@ function App() {
   };
 
   function runGenerator(code) {
-    try { return new Function(code)() } catch (e) { return { q: "Error", a: "..." } }
+    try { 
+      return new Function(code)() 
+    } catch (e) { 
+      // Graceful error fallback
+      return { q: "Question template error", a: "Check DB" } 
+    }
   }
 
   // --- CARD ACTIONS ---
+
   const changeFontSize = (e, index, delta) => {
     e.stopPropagation(); 
-    const newCards = [...cards];
-    newCards[index].fontSize = Math.max(0.5, Math.min(5.0, newCards[index].fontSize + delta));
-    setCards(newCards);
+    setCards(prevCards => 
+      prevCards.map((card, i) => 
+        i === index 
+          ? { ...card, fontSize: Math.max(0.5, Math.min(5.0, card.fontSize + delta)) }
+          : card
+      )
+    );
   };
 
   const refreshCard = (e, index) => {
-    e.preventDefault(); e.stopPropagation();
-    const newCards = [...cards];
-    const card = newCards[index];
-    if (card.generator_code) {
-      const generated = runGenerator(card.generator_code);
-      card.currentQ = generated.q; card.currentA = generated.a; card.revealed = false;
-      const newRatings = { ...ratings }; delete newRatings[index]; setRatings(newRatings);
-      setCards(newCards);
-    } else { alert("This is a fixed review card, it cannot be refreshed."); }
+    e.preventDefault(); 
+    e.stopPropagation();
+    
+    setCards(prevCards => {
+      const card = prevCards[index];
+      if (card.generator_code) {
+        const generated = runGenerator(card.generator_code);
+        return prevCards.map((c, i) => 
+          i === index 
+            ? { ...c, currentQ: generated.q, currentA: generated.a, revealed: false }
+            : c
+        );
+      } else { 
+        alert("This is a fixed review card, it cannot be refreshed."); 
+        return prevCards;
+      }
+    });
+    
+    setRatings(prevRatings => {
+      const newRatings = { ...prevRatings }; 
+      delete newRatings[index]; 
+      return newRatings;
+    });
   };
 
   const swapTopic = async (e, index) => {
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault(); 
+    e.stopPropagation();
+
     const { data } = await supabase.from('questions').select('*');
     if (data && data.length > 0) {
       const randomQ = data[Math.floor(Math.random() * data.length)];
       const generated = runGenerator(randomQ.generator_code);
       
-      const newCards = [...cards];
-      // STRICT REPLACE: Does not add, only updates
-      newCards[index] = { 
+      // Create the replacement card
+      const replacementCard = { 
         ...randomQ, 
-        id: `swap-${Math.random()}`, 
-        currentQ: generated.q, currentA: generated.a, 
-        revealed: false, fontSize: 1.4, isReview: false 
+        id: `swap-${Date.now()}-${index}`, 
+        currentQ: generated.q, 
+        currentA: generated.a, 
+        revealed: false, 
+        fontSize: 1.4, 
+        isReview: false 
       };
-      const newRatings = { ...ratings }; delete newRatings[index]; setRatings(newRatings);
-      setCards(newCards);
+      
+      // Use functional update to ensure we're working with latest state
+      // Map creates a new array, replacing ONLY the card at the specified index
+      setCards(prevCards => 
+        prevCards.map((card, i) => i === index ? replacementCard : card)
+      );
+      
+      setRatings(prevRatings => {
+        const newRatings = { ...prevRatings }; 
+        delete newRatings[index]; 
+        return newRatings;
+      });
     }
   };
 
   const toggleReveal = (index) => {
-    const newCards = [...cards];
-    newCards[index].revealed = !newCards[index].revealed;
-    setCards(newCards);
+    setCards(prevCards => 
+      prevCards.map((card, i) => 
+        i === index ? { ...card, revealed: !card.revealed } : card
+      )
+    );
   };
 
   const handleRating = (index, score) => {
@@ -159,6 +203,7 @@ function App() {
     const getLessonInterval = (score) => {
       switch (score) { case 0: return 1; case 25: return 3; case 75: return 6; case 100: return 12; default: return 1; }
     };
+
     const sessionData = {
       date: new Date().toISOString(),
       class_id: currentClass ? currentClass.name : "Custom Session",
@@ -168,11 +213,15 @@ function App() {
         review_interval: getLessonInterval(ratings[index] || 0) 
       }))
     };
+
     const { error } = await supabase.from('dna_sessions').insert([sessionData]);
-    if (error) alert("Error: " + error.message); else alert("Session Saved!");
-    setShowSaveModal(false); goHome(); 
+    if (error) alert("Error: " + error.message);
+    else alert("Session Saved!");
+    setShowSaveModal(false);
+    goHome(); 
   };
 
+  // --- RENDER PERFORMANCE BUTTONS ---
   const renderPerformanceButtons = (index) => {
     if (!cards[index].revealed) return <div style={{color: '#ccc', fontSize: '0.9rem'}}>Reveal to grade</div>;
     const currentScore = ratings[index];
@@ -186,18 +235,33 @@ function App() {
     );
   };
 
+  // --- RENDER VIEWS ---
+
   if (view === 'selector') return <ClassSelector onSelectClass={handleClassSelected} onCreateNew={handleCreateNewClass} />;
   if (view === 'create-class') return <CreateClass onSave={handleClassCreated} onCancel={() => setView('selector')} />;
   if (view === 'create-dna') return <CreateDNA onGenerate={handleCustomGeneration} onCancel={goHome} />;
-  if (view === 'home') return (
-    <div className="home-container">
-      <div className="home-header"><div className="logo-large">R</div><h1>Revision Board</h1><p>{dateStr}</p></div>
-      <div className="home-actions">
-        <button className="big-btn primary" onClick={startClassSelection}><span className="icon">🧠</span><div className="text"><h3>My Class DNAs</h3><p>Continue spaced repetition</p></div></button>
-        <button className="big-btn secondary" onClick={() => setView('create-dna')}><span className="icon">🧬</span><div className="text"><h3>Create Custom DNA</h3><p>Build a starter manually</p></div></button>
+  
+  if (view === 'home') {
+    return (
+      <div className="home-container">
+        <div className="home-header">
+          <div className="logo-large">R</div>
+          <h1>Revision Board</h1>
+          <p>{dateStr}</p>
+        </div>
+        <div className="home-actions">
+          <button className="big-btn primary" onClick={startClassSelection}>
+            <span className="icon">🧠</span>
+            <div className="text"><h3>My Class DNAs</h3><p>Continue spaced repetition</p></div>
+          </button>
+          <button className="big-btn secondary" onClick={() => setView('create-dna')}>
+            <span className="icon">🧬</span>
+            <div className="text"><h3>Create Custom DNA</h3><p>Build a starter manually</p></div>
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   if (loading) return <div style={{padding: 40}}>Loading Board...</div>;
 
@@ -212,17 +276,24 @@ function App() {
           <button className="btn btn-primary" onClick={goHome}>Exit</button>
         </div>
       </header>
+
       <main>
         <div className="title-bar">
           <input type="text" className="title-input" placeholder="Session Title" defaultValue={currentClass ? currentClass.name + " Starter" : ""} />
           <span className="date-display">{dateStr}</span>
         </div>
+
         <div className="questions-grid">
           {cards.map((card, index) => (
             <div key={card.id || index} className="question-card">
               <div className="card-header">
                 <div className="card-number">{index + 1}</div>
-                <div className="card-topic" title={card.topic}>{card.isReview ? "↺ " : ""}{card.topic}</div>
+                
+                {/* Topic Title with Hover Effect */}
+                <div className="card-topic" title={card.topic}>
+                  {card.isReview ? "↺ " : ""}{card.topic}
+                </div>
+                
                 <div className="card-actions">
                   <div className="zoom-controls">
                     <button className="zoom-btn" type="button" onClick={(e) => changeFontSize(e, index, -0.2)}>-</button>
@@ -237,12 +308,14 @@ function App() {
                   {ratings[index] !== undefined && <span className="rated-badge">✓</span>}
                 </div>
               </div>
+
               <div className={`card-content ${card.revealed ? 'revealed-mode' : ''}`}>
                 <div className="question-text"><MathDisplay text={card.currentQ} fontSize={card.fontSize} /></div>
                 <div className={`answer-overlay ${card.revealed ? 'visible' : ''}`}>
                    <div className="answer-overlay-text"><MathDisplay text={card.currentA} fontSize={2} /></div>
                 </div>
               </div>
+
               <div className="card-footer" style={{ justifyContent: 'space-between' }}>
                 {renderPerformanceButtons(index)}
                 <button className="reveal-btn" type="button" onClick={() => toggleReveal(index)}>{card.revealed ? 'Hide' : 'Reveal'}</button>
@@ -251,6 +324,7 @@ function App() {
           ))}
         </div>
       </main>
+
       {showSaveModal && (
         <div className="modal-backdrop">
           <div className="modal-box">
