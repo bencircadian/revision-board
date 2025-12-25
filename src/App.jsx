@@ -271,8 +271,8 @@ function App() {
     return (
       <div className="home-container">
         <div className="home-header">
-          <div className="logo-large">R</div>
-          <h1>Revision Board</h1>
+          <div className="logo-large">E</div>
+          <h1>Engram</h1>
           <p>{dateStr}</p>
         </div>
         <div className="home-actions">
