@@ -449,25 +449,32 @@ const createDNAStyles = `
     gap: 4px;
   }
 
-  .diff-btn {
+.diff-btn {
     width: 32px;
     height: 32px;
     border: 2px solid #e2e8f0;
     border-radius: 6px;
     background: white;
-    font-size: 0.9rem;
+    font-size: 1.2rem; /* Increased size slightly */
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    letter-spacing: -1px;
+    
+    /* FIX FOR BLEEDING DOTS: */
+    letter-spacing: 2px; /* Changed from -1px to 2px */
+    text-indent: 2px;    /* Offsets the spacing so dots stay centered */
+    line-height: 1;
+    padding-bottom: 3px; /* Optical adjustment */
+    color: #94a3b8;      /* Muted color by default */
   }
 
-  .diff-btn:hover {
+.diff-btn:hover {
     border-color: #99f6e4;
     background: #f0fdfa;
+    color: #0d9488;
   }
 
   .diff-btn.active {
@@ -483,12 +490,12 @@ const createDNAStyles = `
     color: #0d9488;
     border: 1px solid #99f6e4;
     border-radius: 6px;
-    font-size: 1rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
+    padding: 0; /* Removes padding to ensure perfect SVG centering */
   }
 
   .btn-duplicate:hover:not(:disabled) {
