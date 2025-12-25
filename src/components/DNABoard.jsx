@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../supabase';
+import { Icon } from './Icons';
 
 // Math Display Component
 const MathDisplay = ({ text, fontSize }) => {
@@ -233,7 +234,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
         </div>
         <div className="header-right">
           <button className="btn-share" onClick={generateShareLink}>
-            🔗 Share Board
+            <><Icon name="link" size={16} /> Share Board</>
           </button>
           <button className="btn-reset" onClick={() => setRatings({})}>Reset</button>
         </div>
@@ -296,7 +297,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
       {showSaveModal && (
         <div className="modal-backdrop">
           <div className="modal-box">
-            <h3>📝 Session Complete!</h3>
+            <h3><Icon name="check" size={24} /> Session Complete!</h3>
             <p>Save progress for <strong>{currentClass?.name || "this session"}</strong>?</p>
             <div className="modal-actions">
               <button className="btn-cancel" onClick={() => setShowSaveModal(false)}>Skip</button>
@@ -310,7 +311,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
       {showShareModal && (
         <div className="modal-backdrop">
           <div className="modal-box">
-            <h3>🔗 Share This Board</h3>
+            <h3><Icon name="link" size={24} /> Share This Board</h3>
             <p>Copy this link to share these exact questions:</p>
             <div className="share-link-box">
               <input type="text" value={shareLink} readOnly />
