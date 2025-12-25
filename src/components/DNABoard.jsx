@@ -9,12 +9,31 @@ const MathDisplay = ({ text, fontSize }) => {
   useEffect(() => {
     if (containerRef.current && window.katex) {
       let html = text || "";
-      html = html.replace(/\$([^$]+)\$/g, (match, latex) => {
-        try {
-          return window.katex.renderToString(latex, { throwOnError: false });
-        } catch (e) { return match; }
-      });
-      containerRef.current.innerHTML = html;
+      
+      // If it contains SVG, render as HTML directly
+      if (html.includes('<svg') || html.includes('<SVG')) {
+        containerRef.current.innerHTML = html;
+        return;
+      }
+      
+      // If already has $ delimiters, process those
+      if (html.includes('$')) {
+        html = html.replace(/\$([^$]+)\$/g, (match, latex) => {
+          try {
+            return window.katex.renderToString(latex, { throwOnError: false });
+          } catch (e) { return match; }
+        });
+        containerRef.current.innerHTML = html;
+        return;
+      }
+      
+      // Otherwise, try to render the whole thing as KaTeX
+      try {
+        containerRef.current.innerHTML = window.katex.renderToString(html, { throwOnError: false });
+      } catch (e) {
+        // If KaTeX fails, just show plain text
+        containerRef.current.textContent = html;
+      }
     }
   }, [text]);
 
