@@ -110,9 +110,19 @@ main {
 }
 
 .card-number {
-  background: var(--primary); color: white; width: 24px; height: 24px;
-  border-radius: 6px; display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 0.8rem; margin-right: 10px; flex-shrink: 0;
+  background: var(--accent); /* This is your DNA Pink (#DB2777) */
+  color: #FFFFFF;            /* Forces the number to remain pure white */
+  width: 22px; 
+  height: 22px;
+  border-radius: 5px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  font-weight: 800;          /* Extra bold for high-contrast visibility */
+  font-size: 0.75rem; 
+  margin-right: 8px; 
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(219, 39, 119, 0.3); /* Subtle pink glow */
 }
 
 /* Hover Title Logic */
