@@ -79,11 +79,11 @@ main {
 }
 .date-display { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
 
-/* --- GRID (Tighter Gaps) --- */
 .questions-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px; /* Reduced gap */
+  /* Use minmax(0, 1fr) to ensure long text doesn't push the column wider */
+  grid-template-columns: repeat(3, minmax(0, 1fr)); 
+  gap: 15px; 
   width: 100%;
   justify-content: center;
 }
