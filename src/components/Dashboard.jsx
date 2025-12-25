@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+import { Icon } from './Icons';
 
 export default function Dashboard({ onNavigate }) {
   const [classes, setClasses] = useState([]);
@@ -150,7 +151,7 @@ export default function Dashboard({ onNavigate }) {
         </div>
         <div className="header-actions">
           <button className="btn-quick-dna" onClick={() => onNavigate('create-dna')}>
-            <span>🧬</span> Quick DNA
+            <Icon name="dna" size={18} /> Quick DNA
           </button>
         </div>
       </header>
@@ -158,28 +159,28 @@ export default function Dashboard({ onNavigate }) {
       {/* Stats Cards */}
       <section className="stats-grid">
         <div className="stat-card">
-          <div className="stat-icon">📊</div>
+          <div className="stat-icon"><Icon name="chart" size={24} /></div>
           <div className="stat-content">
             <span className="stat-value">{stats.totalQuestions}</span>
             <span className="stat-label">Questions Practiced</span>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">🎯</div>
+          <div className="stat-icon"><Icon name="target" size={24} /></div>
           <div className="stat-content">
             <span className="stat-value">{stats.avgScore}%</span>
             <span className="stat-label">Avg. Score</span>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">🔥</div>
+          <div className="stat-icon"><Icon name="flame" size={24} /></div>
           <div className="stat-content">
             <span className="stat-value">{stats.streakDays}</span>
             <span className="stat-label">Day Streak</span>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">🎓</div>
+          <div className="stat-icon"><Icon name="hat" size={24} /></div>
           <div className="stat-content">
             <span className="stat-value">{classes.length}</span>
             <span className="stat-label">Active Classes</span>
@@ -198,7 +199,7 @@ export default function Dashboard({ onNavigate }) {
 
         {classes.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">🎓</div>
+            <div className="empty-icon"><Icon name="hat" size={48} /></div>
             <h3>No classes yet</h3>
             <p>Create your first class to start tracking student progress</p>
             <button className="btn-primary" onClick={() => onNavigate('create-class')}>
