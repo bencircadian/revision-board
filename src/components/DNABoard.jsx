@@ -127,7 +127,19 @@ export default function DNABoard({ currentClass, onNavigate }) {
   }
 
   function runGenerator(code) {
-    try { return new Function(code)() } catch (e) { return { q: "Error", a: "..." } }
+    try {
+      if (!code) return { q: "No question available", a: "-" };
+      const result = new Function(code)();
+      // Handle undefined/null/empty results
+      if (!result || typeof result !== 'object') return { q: "Error generating question", a: "-" };
+      return { 
+        q: result.q ?? "Missing question", 
+        a: result.a ?? "-" 
+      };
+    } catch (e) { 
+      console.error('Generator error:', e);
+      return { q: "Error in question", a: "-" }; 
+    }
   }
 
   const changeFontSize = (e, index, delta) => {
