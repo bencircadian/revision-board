@@ -322,8 +322,14 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                   
                   <div className={`preview-panel ${noMatchWarning ? 'no-match' : ''}`}>
                     <div className="preview-content">
-                      <div className="preview-question"><strong>Q:</strong> {preview?.q?.trim().startsWith('<') ? 'Preview not available' : (preview?.q || 'Loading...')}</div>
-                      <div className="preview-answer"><strong>A:</strong> {preview?.a || '...'}</div>
+                      {(preview?.q?.trim().startsWith('<') || preview?.a?.trim().startsWith('<')) ? (
+                        <div className="preview-unavailable">Preview not available</div>
+                      ) : (
+                        <>
+                          <div className="preview-question"><strong>Q:</strong> {preview?.q || 'Loading...'}</div>
+                          <div className="preview-answer"><strong>A:</strong> {preview?.a || '...'}</div>
+                        </>
+                      )}
                       {noMatchWarning && (
                         <div className="no-match-warning">⚠ No questions at this difficulty - showing any</div>
                       )}
@@ -422,6 +428,7 @@ const createDNAStyles = `
   .preview-content { flex: 1; min-width: 0; }
   .preview-question { font-size: 0.85rem; color: #334155; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .preview-answer { font-size: 0.8rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .preview-unavailable { font-size: 0.85rem; color: #94a3b8; font-style: italic; }
   .no-match-warning { font-size: 0.7rem; color: #d97706; margin-top: 4px; }
   
   .btn-refresh { width: 28px; height: 28px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; color: #64748b; }
