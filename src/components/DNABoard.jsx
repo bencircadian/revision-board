@@ -6,6 +6,16 @@ import { Icon } from './Icons';
 const MathDisplay = ({ text, fontSize }) => {
   const containerRef = useRef(null);
 
+  // Auto-wrap words in \text{} so they render upright in KaTeX
+  const preprocessForKatex = (input) => {
+    // Don't process if already has \text{} commands
+    if (input.includes('\\text{')) return input;
+    
+    // Match sequences of letters (words) that aren't part of LaTeX commands
+    // This regex finds words but avoids things like \times, \div, \frac, etc.
+    return input.replace(/(?<!\\)([A-Za-z]{2,})/g, '\\text{$1}');
+  };
+
   useEffect(() => {
     if (containerRef.current && window.katex) {
       let html = text || "";
@@ -27,9 +37,12 @@ const MathDisplay = ({ text, fontSize }) => {
         return;
       }
       
-      // Otherwise, try to render the whole thing as KaTeX
+      // Preprocess to wrap words in \text{} for readable rendering
+      const processed = preprocessForKatex(html);
+      
+      // Try to render as KaTeX
       try {
-        containerRef.current.innerHTML = window.katex.renderToString(html, { throwOnError: false });
+        containerRef.current.innerHTML = window.katex.renderToString(processed, { throwOnError: false });
       } catch (e) {
         // If KaTeX fails, just show plain text
         containerRef.current.textContent = html;
