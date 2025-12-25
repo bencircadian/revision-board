@@ -33,7 +33,12 @@ export const Icon = ({ name, size = 20, className = "" }) => {
     check: <path d="M20 6 9 17l-5-5" />,
     books: <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />,
     sparkles: <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z" />,
-    alert: <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+    alert: <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />,
+
+    // Difficulty Levels (Solid Dots)
+  level1: <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />,
+  level2: <><circle cx="8" cy="12" r="3" fill="currentColor" stroke="none" /><circle cx="16" cy="12" r="3" fill="currentColor" stroke="none" /></>,
+  level3: <><circle cx="5" cy="12" r="3" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="3" fill="currentColor" stroke="none" /></>,
   };
 
   return <svg viewBox="0 0 24 24" {...common}>{icons[name]}</svg>;
