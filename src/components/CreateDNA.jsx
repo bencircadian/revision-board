@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+import { Icon } from './Icons';
 
 // Difficulty mapping
 const DIFFICULTIES = {
@@ -158,7 +159,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
       <div className="create-card">
         <header className="card-header">
           <div>
-            <h1>🧬 Create Custom DNA</h1>
+            <h1><Icon name="dna" size={28} style={{marginRight:'10px', verticalAlign:'middle'}} /> Create Custom DNA</h1>
             <p>Select up to 6 topics for your starter board</p>
           </div>
           <button className="btn-back" onClick={onCancel}>← Back</button>
@@ -166,7 +167,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
 
         {/* Topic Search */}
         <div className="topic-search">
-          <span className="search-icon">🔍</span>
+          <span className="search-icon"><Icon name="search" size={16} /></span>
           <input
             type="text"
             placeholder="Search topics..."
@@ -292,8 +293,12 @@ export default function CreateDNA({ onGenerate, onCancel }) {
           <div className="main-actions">
             <button className="btn-cancel" onClick={onCancel}>Cancel</button>
             <button className="btn-generate" onClick={handleGenerate} disabled={loading}>
-              {loading ? 'Generating...' : '🚀 Generate Board'}
-            </button>
+  {loading ? 'Generating...' : (
+    <>
+      <Icon name="rocket" size={18} style={{marginRight: '8px'}} /> Generate Board
+    </>
+  )}
+</button>
           </div>
         </div>
 
