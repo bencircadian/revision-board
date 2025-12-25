@@ -1,6 +1,24 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 
+// Difficulty mapping: database stores '•', '••', '•••' or level 1, 2, 3
+const DIFFICULTIES = {
+  '•': { label: '•', level: 1, className: 'level-1' },
+  '••': { label: '••', level: 2, className: 'level-2' },
+  '•••': { label: '•••', level: 3, className: 'level-3' },
+  // Fallback mappings for legacy data
+  'Easy': { label: '•', level: 1, className: 'level-1' },
+  'Medium': { label: '••', level: 2, className: 'level-2' },
+  'Hard': { label: '•••', level: 3, className: 'level-3' },
+  '1': { label: '•', level: 1, className: 'level-1' },
+  '2': { label: '••', level: 2, className: 'level-2' },
+  '3': { label: '•••', level: 3, className: 'level-3' },
+};
+
+const getDifficultyInfo = (diff) => {
+  return DIFFICULTIES[diff] || DIFFICULTIES['••']; // Default to middle difficulty
+};
+
 export default function TopicsQuestions({ onNavigate }) {
   const [questions, setQuestions] = useState([]);
   const [topics, setTopics] = useState([]);
@@ -8,7 +26,7 @@ export default function TopicsQuestions({ onNavigate }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newQuestion, setNewQuestion] = useState({ topic: '', difficulty: 'Medium', generator_code: '' });
+  const [newQuestion, setNewQuestion] = useState({ topic: '', difficulty: '••', generator_code: '' });
   const [expandedQuestion, setExpandedQuestion] = useState(null);
 
   useEffect(() => {
@@ -54,7 +72,7 @@ export default function TopicsQuestions({ onNavigate }) {
       alert('Error adding question: ' + error.message);
     } else {
       setShowAddModal(false);
-      setNewQuestion({ topic: '', difficulty: 'Medium', generator_code: '' });
+      setNewQuestion({ topic: '', difficulty: '••', generator_code: '' });
       fetchQuestions();
     }
   };
@@ -64,9 +82,9 @@ export default function TopicsQuestions({ onNavigate }) {
     return {
       count: topicQuestions.length,
       difficulties: {
-        Easy: topicQuestions.filter(q => q.difficulty === 'Easy').length,
-        Medium: topicQuestions.filter(q => q.difficulty === 'Medium').length,
-        Hard: topicQuestions.filter(q => q.difficulty === 'Hard').length,
+        level1: topicQuestions.filter(q => getDifficultyInfo(q.difficulty).level === 1).length,
+        level2: topicQuestions.filter(q => getDifficultyInfo(q.difficulty).level === 2).length,
+        level3: topicQuestions.filter(q => getDifficultyInfo(q.difficulty).level === 3).length,
       }
     };
   };
@@ -140,14 +158,14 @@ export default function TopicsQuestions({ onNavigate }) {
                   <div className="topic-stats">
                     <span className="total">{stats.count} questions</span>
                     <div className="difficulty-breakdown">
-                      {stats.difficulties.Easy > 0 && (
-                        <span className="diff easy">{stats.difficulties.Easy} Easy</span>
+                      {stats.difficulties.level1 > 0 && (
+                        <span className="diff level-1">{stats.difficulties.level1} •</span>
                       )}
-                      {stats.difficulties.Medium > 0 && (
-                        <span className="diff medium">{stats.difficulties.Medium} Med</span>
+                      {stats.difficulties.level2 > 0 && (
+                        <span className="diff level-2">{stats.difficulties.level2} ••</span>
                       )}
-                      {stats.difficulties.Hard > 0 && (
-                        <span className="diff hard">{stats.difficulties.Hard} Hard</span>
+                      {stats.difficulties.level3 > 0 && (
+                        <span className="diff level-3">{stats.difficulties.level3} •••</span>
                       )}
                     </div>
                   </div>
@@ -179,6 +197,7 @@ export default function TopicsQuestions({ onNavigate }) {
             {filteredQuestions.map(q => {
               const example = runGenerator(q.generator_code);
               const isExpanded = expandedQuestion === q.id;
+              const diffInfo = getDifficultyInfo(q.difficulty);
 
               return (
                 <div
@@ -187,8 +206,8 @@ export default function TopicsQuestions({ onNavigate }) {
                   onClick={() => setExpandedQuestion(isExpanded ? null : q.id)}
                 >
                   <div className="question-header">
-                    <span className={`difficulty-badge ${q.difficulty?.toLowerCase() || 'medium'}`}>
-                      {q.difficulty || 'Medium'}
+                    <span className={`difficulty-badge ${diffInfo.className}`}>
+                      {diffInfo.label}
                     </span>
                     <span className="topic-badge">{q.topic}</span>
                   </div>
@@ -243,14 +262,29 @@ export default function TopicsQuestions({ onNavigate }) {
             </div>
             <div className="form-group">
               <label>Difficulty</label>
-              <select
-                value={newQuestion.difficulty}
-                onChange={(e) => setNewQuestion({ ...newQuestion, difficulty: e.target.value })}
-              >
-                <option>Easy</option>
-                <option>Medium</option>
-                <option>Hard</option>
-              </select>
+              <div className="difficulty-selector">
+                <button
+                  type="button"
+                  className={`diff-btn ${newQuestion.difficulty === '•' ? 'active' : ''}`}
+                  onClick={() => setNewQuestion({ ...newQuestion, difficulty: '•' })}
+                >
+                  •
+                </button>
+                <button
+                  type="button"
+                  className={`diff-btn ${newQuestion.difficulty === '••' ? 'active' : ''}`}
+                  onClick={() => setNewQuestion({ ...newQuestion, difficulty: '••' })}
+                >
+                  ••
+                </button>
+                <button
+                  type="button"
+                  className={`diff-btn ${newQuestion.difficulty === '•••' ? 'active' : ''}`}
+                  onClick={() => setNewQuestion({ ...newQuestion, difficulty: '•••' })}
+                >
+                  •••
+                </button>
+              </div>
             </div>
             <div className="form-group">
               <label>Generator Code (JavaScript)</label>
@@ -289,7 +323,6 @@ const topicsStyles = `
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
-  /* Header */
   .page-header {
     display: flex;
     justify-content: space-between;
@@ -326,7 +359,6 @@ const topicsStyles = `
     box-shadow: 0 6px 16px rgba(13, 148, 136, 0.35);
   }
 
-  /* Filters */
   .filters-bar {
     display: flex;
     gap: 16px;
@@ -371,7 +403,6 @@ const topicsStyles = `
     cursor: pointer;
   }
 
-  /* Topics Overview */
   .topics-overview {
     margin-bottom: 40px;
   }
@@ -427,15 +458,14 @@ const topicsStyles = `
   .diff {
     padding: 2px 8px;
     border-radius: 12px;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 600;
   }
 
-  .diff.easy { background: #dcfce7; color: #16a34a; }
-  .diff.medium { background: #fef9c3; color: #ca8a04; }
-  .diff.hard { background: #fee2e2; color: #dc2626; }
+  .diff.level-1 { background: #dcfce7; color: #16a34a; }
+  .diff.level-2 { background: #fef9c3; color: #ca8a04; }
+  .diff.level-3 { background: #fee2e2; color: #dc2626; }
 
-  /* Questions List */
   .questions-list h2 {
     font-size: 1.1rem;
     color: #1e293b;
@@ -493,16 +523,16 @@ const topicsStyles = `
   }
 
   .difficulty-badge {
-    padding: 4px 10px;
+    padding: 4px 12px;
     border-radius: 20px;
-    font-size: 0.7rem;
+    font-size: 0.85rem;
     font-weight: 700;
-    text-transform: uppercase;
+    letter-spacing: 1px;
   }
 
-  .difficulty-badge.easy { background: #dcfce7; color: #16a34a; }
-  .difficulty-badge.medium { background: #fef9c3; color: #ca8a04; }
-  .difficulty-badge.hard { background: #fee2e2; color: #dc2626; }
+  .difficulty-badge.level-1 { background: #dcfce7; color: #16a34a; }
+  .difficulty-badge.level-2 { background: #fef9c3; color: #ca8a04; }
+  .difficulty-badge.level-3 { background: #fee2e2; color: #dc2626; }
 
   .topic-badge {
     padding: 4px 10px;
@@ -565,7 +595,6 @@ const topicsStyles = `
     background: #f8fafc;
   }
 
-  /* Empty State */
   .empty-state {
     text-align: center;
     padding: 60px;
@@ -575,7 +604,6 @@ const topicsStyles = `
     border: 2px dashed #e2e8f0;
   }
 
-  /* Modal */
   .modal-backdrop {
     position: fixed;
     inset: 0;
@@ -641,6 +669,35 @@ const topicsStyles = `
     box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
   }
 
+  .difficulty-selector {
+    display: flex;
+    gap: 8px;
+  }
+
+  .diff-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    background: white;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 2px;
+  }
+
+  .diff-btn:hover {
+    border-color: #99f6e4;
+    background: #f0fdfa;
+  }
+
+  .diff-btn.active {
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+    color: white;
+    border-color: transparent;
+  }
+
   .preview-box {
     background: #f0fdfa;
     padding: 16px;
@@ -686,7 +743,6 @@ const topicsStyles = `
     color: white;
   }
 
-  /* Responsive */
   @media (max-width: 768px) {
     .topics-page {
       padding: 20px 16px;
