@@ -322,7 +322,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                   
                   <div className={`preview-panel ${noMatchWarning ? 'no-match' : ''}`}>
                     <div className="preview-content">
-                      <div className="preview-question"><strong>Q:</strong> {preview?.q || 'Loading...'}</div>
+                      <div className="preview-question"><strong>Q:</strong> {preview?.q?.trim().startsWith('<') ? 'Preview not available' : (preview?.q || 'Loading...')}</div>
                       <div className="preview-answer"><strong>A:</strong> {preview?.a || '...'}</div>
                       {noMatchWarning && (
                         <div className="no-match-warning">⚠ No questions at this difficulty - showing any</div>
