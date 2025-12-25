@@ -78,7 +78,6 @@ export default function TopicsQuestions({ onNavigate }) {
     questions.forEach(q => {
       const d = q.domain || 'Uncategorized';
       const t = q.topic || 'General';
-      // UPDATED: Using skill_name from database
       const s = q.skill_name || 'General Skills';
 
       if (!groups[d]) groups[d] = {};
@@ -94,7 +93,6 @@ export default function TopicsQuestions({ onNavigate }) {
   // Unique lists for Autocomplete
   const uniqueDomains = useMemo(() => Object.keys(groupedData).sort(), [groupedData]);
   const uniqueTopics = useMemo(() => [...new Set(questions.map(q => q.topic).filter(Boolean))].sort(), [questions]);
-  // UPDATED: Mapping to skill_name
   const uniqueSkills = useMemo(() => [...new Set(questions.map(q => q.skill_name).filter(Boolean))].sort(), [questions]);
 
   // --- SEARCH FILTERING ---
@@ -125,7 +123,7 @@ export default function TopicsQuestions({ onNavigate }) {
     const payload = {
       domain: formData.domain || null,
       topic: formData.topic,
-      skill_name: formData.skill_name || null, // UPDATED field name
+      skill_name: formData.skill_name || null,
       difficulty: formData.difficulty,
       generator_code: formData.generator_code
     };
@@ -153,7 +151,7 @@ export default function TopicsQuestions({ onNavigate }) {
     setFormData({
       domain: q.domain || '',
       topic: q.topic || '',
-      skill_name: q.skill_name || '', // UPDATED
+      skill_name: q.skill_name || '',
       difficulty: q.difficulty || '••',
       generator_code: q.generator_code || ''
     });
@@ -177,7 +175,8 @@ export default function TopicsQuestions({ onNavigate }) {
       <div key={q.id} className={`question-item ${isExpanded ? 'expanded' : ''}`} onClick={() => { setExpandedQuestion(isExpanded ? null : q.id); setShowSourceCode(false); }}>
         <div className="question-header">
           <span className={`difficulty-badge ${diffInfo.className}`}>{diffInfo.label}</span>
-          <span className="topic-badge">{q.topic}</span>
+          {/* UPDATED: Showing Skill Name instead of Topic */}
+          <span className="topic-badge">{q.skill_name || q.topic}</span>
         </div>
         <div className="question-preview"><strong>Q:</strong> <QuestionDisplay content={example.q} /></div>
         <div className="answer-preview"><strong>A:</strong> <QuestionDisplay content={example.a} /></div>
@@ -339,7 +338,6 @@ export default function TopicsQuestions({ onNavigate }) {
             <div className="form-row">
               <div className="form-group half">
                 <label>Skill</label>
-                {/* UPDATED: Binding to skill_name */}
                 <input list="skills" type="text" placeholder="e.g. Factorising" value={formData.skill_name} onChange={e => setFormData({...formData, skill_name: e.target.value})} />
                 <datalist id="skills">{uniqueSkills.map(s => <option key={s} value={s} />)}</datalist>
               </div>
