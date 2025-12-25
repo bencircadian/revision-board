@@ -154,25 +154,47 @@ function App() {
   if (view === 'home') {
     return (
       <div className="home-container">
-        <div className="home-header"><div className="logo-large">E</div><h1>Engram</h1><p>{dateStr}</p></div>
+        <div className="home-header">
+          <div className="logo-large">E</div>
+          <h1>Engram</h1>
+          <p>{dateStr}</p>
+        </div>
         <div className="home-actions">
-          <button className="big-btn primary" onClick={startClassSelection}>
-            <span className="icon">🧠</span><div className="text"><h3>My Class DNAs</h3><p>Continue spaced repetition</p></div>
+          <button className="big-btn" onClick={startClassSelection}>
+            <span className="icon">🧠</span>
+            <div className="text">
+              <h3>My Class DNAs</h3>
+              <p>Continue spaced repetition</p>
+            </div>
           </button>
-          <button className="big-btn secondary" onClick={() => setView('create-dna')}>
-            <span className="icon">🧬</span><div className="text"><h3>Create Custom DNA</h3><p>Build a starter manually</p></div>
+          <button className="big-btn" onClick={() => setView('create-dna')}>
+            <span className="icon">🧬</span>
+            <div className="text">
+              <h3>Create Custom DNA</h3>
+              <p>Build a starter manually</p>
+            </div>
           </button>
         </div>
       </div>
     );
   }
 
-  if (loading) return <div style={{padding: 40}}>Loading Board...</div>;
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <div className="loading-text">Loading Board...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-wrapper">
       <header>
-        <div className="logo" onClick={goHome}><div className="logo-mark">E</div><span className="logo-text">Engram</span></div>
+        <div className="logo" onClick={goHome}>
+          <div className="logo-mark">E</div>
+          <span className="logo-text">Engram</span>
+        </div>
         <input type="text" className="title-input-header" defaultValue={currentClass ? currentClass.name + " Starter" : "Session Title"} />
         <div className="header-controls">
           <span className="date-display-header">{dateStr}</span>
@@ -193,17 +215,26 @@ function App() {
                     <button className="zoom-btn" onClick={(e) => changeFontSize(e, index, 0.2)}>+</button>
                   </div>
                   {!card.isReview && (
-                    <><button className="card-btn" onClick={(e) => refreshCard(e, index)}>REFRESH</button>
-                    <button className="card-btn" onClick={(e) => swapTopic(e, index)}>CHANGE TOPIC</button></>
+                    <>
+                      <button className="card-btn" onClick={(e) => refreshCard(e, index)}>REFRESH</button>
+                      <button className="card-btn" onClick={(e) => swapTopic(e, index)}>CHANGE TOPIC</button>
+                    </>
                   )}
                 </div>
               </div>
+              
+              {/* FIXED: Answer now appears BELOW question, not as overlay */}
               <div className={`card-content ${card.revealed ? 'revealed-mode' : ''}`}>
-                <div className="question-text"><MathDisplay text={card.currentQ} fontSize={card.fontSize} /></div>
-                <div className={`answer-overlay ${card.revealed ? 'visible' : ''}`}>
-                   <div className="answer-overlay-text"><MathDisplay text={card.currentA} fontSize={2} /></div>
+                <div className="question-text">
+                  <MathDisplay text={card.currentQ} fontSize={card.fontSize} />
+                </div>
+                <div className={`answer-section ${card.revealed ? 'visible' : ''}`}>
+                  <div className="answer-text">
+                    <MathDisplay text={card.currentA} fontSize={1.3} />
+                  </div>
                 </div>
               </div>
+              
               <div className="card-footer">
                 <div className="perf-buttons">
                   {card.revealed ? (
@@ -215,7 +246,9 @@ function App() {
                     </>
                   ) : <div style={{color:'#ccc', fontSize:'0.7rem'}}>REVEAL TO GRADE</div>}
                 </div>
-                <button className="reveal-btn" onClick={() => toggleReveal(index)}>{card.revealed ? 'Hide' : 'Reveal'}</button>
+                <button className="reveal-btn" onClick={() => toggleReveal(index)}>
+                  {card.revealed ? 'Hide' : 'Reveal'}
+                </button>
               </div>
             </div>
           ))}
@@ -223,10 +256,16 @@ function App() {
       </main>
 
       {showSaveModal && (
-        <div className="modal-backdrop"><div className="modal-box"><h3>📝 Session Complete</h3>
+        <div className="modal-backdrop">
+          <div className="modal-box">
+            <h3>📝 Session Complete</h3>
             <p>Save progress for <strong>{currentClass ? currentClass.name : "Custom Session"}</strong>?</p>
-            <div className="modal-actions"><button className="btn-cancel" onClick={() => setShowSaveModal(false)}>No</button>
-              <button className="btn-confirm" onClick={saveSession}>Yes, Save</button></div></div></div>
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={() => setShowSaveModal(false)}>No</button>
+              <button className="btn-confirm" onClick={saveSession}>Yes, Save</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
