@@ -87,24 +87,52 @@ main {
 
 /* --- CARD HEADER --- */
 .card-header {
-  padding: 10px 15px; border-bottom: 1px solid #eee;
-  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 15px; 
+  border-bottom: 1px solid #eee;
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; /* Pushes text left, buttons right */
   background: #fdfdfd;
+  height: 50px; /* Enforce a consistent height */
 }
 
 .card-number {
-  background: var(--accent-1); color: white; width: 24px; height: 24px;
-  border-radius: 6px; display: flex; align-items: center; justify-content: center;
-  font-weight: bold; font-size: 0.8rem; margin-right: 10px;
+  background: var(--accent-1); 
+  color: white; 
+  width: 24px; 
+  height: 24px;
+  border-radius: 6px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  font-weight: bold; 
+  font-size: 0.8rem; 
+  margin-right: 10px;
+  flex-shrink: 0; /* Prevents number box from squashing */
 }
 
 .card-topic { 
-  font-weight: 700; color: #444; font-size: 0.9rem; 
-  text-transform: uppercase; letter-spacing: 0.5px;
-  flex: 1; text-align: left;
+  font-weight: 700; 
+  color: #444; 
+  font-size: 0.75rem; /* Reduced size to fit long titles */
+  text-transform: uppercase; 
+  letter-spacing: 0.5px;
+  flex: 1; /* Takes up all available space */
+  text-align: left;
+  
+  /* Force single line with ... if too long */
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+  margin-right: 10px; /* Space between text and buttons */
 }
 
-.card-actions { display: flex; align-items: center; gap: 5px; }
+.card-actions { 
+  display: flex; 
+  align-items: center; 
+  gap: 5px; 
+  flex-shrink: 0; /* Crucial: Prevents buttons from wrapping or shrinking */
+}
 
 /* Zoom Controls */
 .zoom-controls {
