@@ -6,47 +6,42 @@ import { Icon } from './Icons';
 const MathDisplay = ({ text, fontSize }) => {
   const containerRef = useRef(null);
 
-  // Auto-wrap words in \text{} so they render upright in KaTeX
-  const preprocessForKatex = (input) => {
-    // Don't process if already has \text{} commands
-    if (input.includes('\\text{')) return input;
-    
-    // Wrap any word (2+ letters) in \text{} unless it's a LaTeX command (preceded by \)
-    // This makes words render upright instead of italic
-    return input.replace(/(?<!\\)\b([A-Za-z][A-Za-z]+)\b/g, '\\text{$1}');
-  };
-
   useEffect(() => {
-    if (containerRef.current && window.katex) {
-      let html = text || "";
-      
-      // If it contains SVG, render as HTML directly
-      if (html.includes('<svg') || html.includes('<SVG')) {
-        containerRef.current.innerHTML = html;
-        return;
-      }
-      
-      // If already has $ delimiters, process those
-      if (html.includes('$')) {
-        html = html.replace(/\$([^$]+)\$/g, (match, latex) => {
+    if (!containerRef.current) return;
+    
+    let content = text || "";
+    
+    // If it contains SVG, render as HTML directly
+    if (content.includes('<svg') || content.includes('<SVG')) {
+      containerRef.current.innerHTML = content;
+      return;
+    }
+    
+    // Check if content actually needs KaTeX (fractions, exponents, roots, etc.)
+    const needsKatex = /\\frac|\\sqrt|\^|_\{|\\times|\\div|\\pm|\\leq|\\geq|\\neq|\$/.test(content);
+    
+    if (needsKatex) {
+      // Has LaTeX commands - use KaTeX
+      if (content.includes('$')) {
+        // Process $ delimiters
+        content = content.replace(/\$([^$]+)\$/g, (match, latex) => {
           try {
             return window.katex.renderToString(latex, { throwOnError: false });
           } catch (e) { return match; }
         });
-        containerRef.current.innerHTML = html;
-        return;
+        containerRef.current.innerHTML = content;
+      } else {
+        // Render whole thing as KaTeX
+        try {
+          containerRef.current.innerHTML = window.katex.renderToString(content, { throwOnError: false });
+        } catch (e) {
+          containerRef.current.textContent = content;
+        }
       }
-      
-      // Preprocess to wrap words in \text{} for readable rendering
-      const processed = preprocessForKatex(html);
-      
-      // Try to render as KaTeX
-      try {
-        containerRef.current.innerHTML = window.katex.renderToString(processed, { throwOnError: false });
-      } catch (e) {
-        // If KaTeX fails, just show plain text
-        containerRef.current.textContent = html;
-      }
+    } else {
+      // Simple text + numbers - just use HTML with nice font
+      // Replace × ÷ − with proper symbols if needed
+      containerRef.current.innerHTML = `<span style="font-family: 'KaTeX_Main', 'Times New Roman', serif;">${content}</span>`;
     }
   }, [text]);
 
