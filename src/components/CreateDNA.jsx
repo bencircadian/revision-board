@@ -241,13 +241,13 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                       <strong>A:</strong> {previews[row.id]?.a || '...'}
                     </div>
                   </div>
-                  <button 
-                    className="btn-refresh" 
-                    onClick={() => refreshPreview(row.id, row.topic)}
-                    title="Show different example"
-                  >
-                    🔄
-                  </button>
+                 <button 
+  className="btn-refresh" 
+  onClick={() => refreshPreview(row.id, row.topic)}
+  title="Show different example"
+>
+  <Icon name="refresh" size={14} />
+</button>
                 </div>
               </div>
             ))}
