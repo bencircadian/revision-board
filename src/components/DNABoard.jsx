@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
 import { Icon } from './Icons';
 import Latex from 'react-latex-next';
@@ -78,7 +78,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
     const finalBoard = [
       ...reviewQuestions.map(q => ({
         ...q, currentQ: q.question_text, currentA: q.answer_text,
-        revealed: false, fontSize: 0.95, isReview: true // Reduced default font size to 0.95
+        revealed: false, fontSize: 0.95, isReview: true 
       })),
       ...newQuestions.map(q => {
         const generated = runGenerator(q.generator_code);
@@ -87,7 +87,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
           currentQ: generated.q, 
           currentA: generated.a,
           currentImage: generated.image,
-          revealed: false, fontSize: 0.95, isReview: false // Reduced default font size to 0.95
+          revealed: false, fontSize: 0.95, isReview: false 
         };
       })
     ];
@@ -326,6 +326,8 @@ export default function DNABoard({ currentClass, onNavigate }) {
               <div className="question-text">
                 <MathDisplay text={card.currentQ} fontSize={card.fontSize} />
               </div>
+              
+              {/* Answer Overlay */}
               <div className={`answer-section ${card.revealed ? 'visible' : ''}`}>
                 <div className="answer-text">
                   <MathDisplay text={card.currentA} fontSize={1.3} />
@@ -476,22 +478,25 @@ const boardStyles = `
     text-align: center;
     overflow: hidden;
     min-height: 0;
+    position: relative; /* Anchor for absolute answer */
   }
 
   /* Image - Takes Priority with min-height safety */
   .question-image {
     flex: 1; 
     width: 100%;
-    min-height: 140px; /* Guarantees image doesn't get crushed by text */
+    /* Add padding to prevent SVG clipping on edges */
+    padding: 0 16px; 
+    max-width: 95%; /* Ensure it pulls away from the edges */
+    min-height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 4px;
-    padding: 4px;
+    margin: 0 auto 4px auto;
   }
   .question-image svg {
     width: auto !important;
-    height: 100% !important; /* Force scale to full container height */
+    height: 100% !important; 
     max-width: 100%;
     display: block;
     vector-effect: non-scaling-stroke;
@@ -505,17 +510,60 @@ const boardStyles = `
     color: #1e293b;
     transition: opacity 0.3s ease;
     width: 100%;
-    padding-bottom: 4px;
-    line-height: 1.3; /* Tighten lines so they take less vertical space */
+    padding-bottom: 8px; /* Extra space at bottom for visual balance */
+    line-height: 1.3; 
   }
-  .card-content.revealed-mode .question-text { opacity: 0.65; }
+  /* When revealed, we do NOT hide text, we just overlay the answer */
+  
+  /* Answer Overlay - ABSOLUTE POSITIONING */
+  .answer-section { 
+    position: absolute;
+    bottom: 0;
+    left: 0; 
+    right: 0;
+    background: rgba(255, 255, 255, 0.98);
+    border-top: 1px solid #e2e8f0;
+    padding: 12px;
+    
+    transform: translateY(110%); /* Start hidden below the fold */
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+  }
+  
+  .answer-section.visible { 
+    transform: translateY(0); /* Slide up to sit on top of bottom content */
+  }
 
-  .answer-section { width: 100%; padding-top: 0; border-top: 1px dashed #e2e8f0; max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s ease; flex-shrink: 0; }
-  .answer-section.visible { max-height: 80px; opacity: 1; padding-top: 6px; }
-  .answer-text { font-size: 1.1rem; font-weight: 700; color: #16a34a; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); padding: 6px 14px; border-radius: 8px; display: inline-block; border: 1px solid #bbf7d0; }
+  .answer-text { 
+    font-size: 1.1rem; 
+    font-weight: 700; 
+    color: #16a34a; 
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); 
+    padding: 6px 14px; 
+    border-radius: 8px; 
+    display: inline-block; 
+    border: 1px solid #bbf7d0; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
 
   /* Compact Footer */
-  .card-footer { padding: 6px 10px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #fafafa; flex-shrink: 0; min-height: 40px; }
+  .card-footer { 
+    padding: 6px 10px; 
+    border-top: 1px solid #f1f5f9; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    background: #fafafa; 
+    flex-shrink: 0; 
+    min-height: 45px; /* Slight increase for tap targets */
+    z-index: 20; /* Ensure footer stays above the answer overlay if z-index fights happen */
+  }
+  
   .perf-buttons { display: flex; gap: 4px; }
   .reveal-hint { color: #94a3b8; font-size: 0.7rem; font-style: italic; }
   .perf-btn { padding: 4px 8px; border-radius: 4px; border: 1px solid #e2e8f0; font-weight: 700; font-size: 0.6rem; cursor: pointer; color: #94a3b8; background: white; transition: all 0.15s ease; }
