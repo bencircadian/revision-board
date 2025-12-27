@@ -17,13 +17,11 @@ const MathDisplay = ({ text, fontSize }) => {
       return;
     }
     
-    // Check if content actually needs KaTeX (fractions, exponents, roots, etc.)
+    // Check if content actually needs KaTeX
     const needsKatex = /\\frac|\\sqrt|\^|_\{|\\times|\\div|\\pm|\\leq|\\geq|\\neq|\$/.test(content);
     
     if (needsKatex) {
-      // Has LaTeX commands - use KaTeX
       if (content.includes('$')) {
-        // Process $ delimiters
         content = content.replace(/\$([^$]+)\$/g, (match, latex) => {
           try {
             return window.katex.renderToString(latex, { throwOnError: false });
@@ -31,7 +29,6 @@ const MathDisplay = ({ text, fontSize }) => {
         });
         containerRef.current.innerHTML = content;
       } else {
-        // Render whole thing as KaTeX
         try {
           containerRef.current.innerHTML = window.katex.renderToString(content, { throwOnError: false });
         } catch (e) {
@@ -39,7 +36,6 @@ const MathDisplay = ({ text, fontSize }) => {
         }
       }
     } else {
-      // Simple text + numbers - just use HTML with nice font
       containerRef.current.innerHTML = `<span style="font-family: 'KaTeX_Main', 'Times New Roman', serif;">${content}</span>`;
     }
   }, [text]);
@@ -63,7 +59,6 @@ export default function DNABoard({ currentClass, onNavigate }) {
 
   useEffect(() => {
     if (currentClass?.cards) {
-      // Custom DNA - cards already provided
       setCards(currentClass.cards.map((card, idx) => ({ ...card, slotKey: `slot-${idx}` })));
       setLoading(false);
     } else if (currentClass) {
@@ -75,7 +70,6 @@ export default function DNABoard({ currentClass, onNavigate }) {
     setLoading(true);
     const classId = classObj.name || "Default Class";
     
-    // Try to get due cards for spaced repetition
     let reviewQuestions = [];
     try {
       const { data: dueCards } = await supabase.rpc('get_due_cards', { p_class_id: classId });
@@ -88,13 +82,9 @@ export default function DNABoard({ currentClass, onNavigate }) {
     let newQuestions = [];
 
     if (slotsRemaining > 0) {
-      // Get questions from topics associated with this class
       const topics = [...(classObj.recent_topics || []), ...(classObj.past_topics || [])];
-      
       let query = supabase.from('questions').select('*');
-      if (topics.length > 0) {
-        query = query.in('topic', topics);
-      }
+      if (topics.length > 0) query = query.in('topic', topics);
       
       const { data: dbData } = await query;
       if (dbData) {
@@ -114,7 +104,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
           ...q, 
           currentQ: generated.q, 
           currentA: generated.a,
-          currentImage: generated.image, // Capture the image
+          currentImage: generated.image,
           revealed: false, fontSize: 1.4, isReview: false
         };
       })
@@ -161,11 +151,52 @@ export default function DNABoard({ currentClass, onNavigate }) {
           ...c, 
           currentQ: generated.q, 
           currentA: generated.a, 
-          currentImage: generated.image, // Update image on refresh
+          currentImage: generated.image,
           revealed: false 
         } : c
       ));
       setRatings(prev => { const n = { ...prev }; delete n[index]; return n; });
+    }
+  };
+
+  const changeDifficulty = async (e, index, level) => {
+    e.preventDefault(); e.stopPropagation();
+    
+    const currentCard = cards[index];
+    const difficultyMap = { 1: '•', 2: '••', 3: '•••' };
+    const targetDiff = difficultyMap[level];
+
+    // Find a question with the same skill/topic but new difficulty
+    // Prefer skill_name if available, otherwise topic
+    let query = supabase.from('questions').select('*').eq('difficulty', targetDiff);
+    
+    if (currentCard.skill_name) {
+      query = query.eq('skill_name', currentCard.skill_name);
+    } else if (currentCard.topic) {
+      query = query.eq('topic', currentCard.topic);
+    }
+
+    const { data } = await query;
+
+    if (data && data.length > 0) {
+      const randomQ = data[Math.floor(Math.random() * data.length)];
+      const generated = runGenerator(randomQ.generator_code);
+      
+      setCards(prev => prev.map((c, i) => i === index ? {
+        ...randomQ,
+        slotKey: c.slotKey,
+        currentQ: generated.q, 
+        currentA: generated.a,
+        currentImage: generated.image,
+        revealed: false, 
+        fontSize: c.fontSize, 
+        isReview: false
+      } : c));
+      
+      // Clear rating for this card as it's a new question
+      setRatings(prev => { const n = { ...prev }; delete n[index]; return n; });
+    } else {
+      alert(`No questions found for Level ${level} in this topic.`);
     }
   };
 
@@ -176,11 +207,8 @@ export default function DNABoard({ currentClass, onNavigate }) {
       const randomQ = data[Math.floor(Math.random() * data.length)];
       const generated = runGenerator(randomQ.generator_code);
       setCards(prev => prev.map((c, i) => i === index ? {
-        ...randomQ, 
-        slotKey: c.slotKey, 
-        currentQ: generated.q, 
-        currentA: generated.a,
-        currentImage: generated.image, // Update image on swap
+        ...randomQ, slotKey: c.slotKey, currentQ: generated.q, currentA: generated.a,
+        currentImage: generated.image,
         revealed: false, fontSize: 1.4, isReview: false
       } : c));
       setRatings(prev => { const n = { ...prev }; delete n[index]; return n; });
@@ -222,7 +250,6 @@ export default function DNABoard({ currentClass, onNavigate }) {
   };
 
   const generateShareLink = async () => {
-    // Create a shareable board config
     const boardConfig = {
       created_at: new Date().toISOString(),
       class_name: currentClass?.name || "Shared DNA",
@@ -234,7 +261,6 @@ export default function DNABoard({ currentClass, onNavigate }) {
       }))
     };
 
-    // Save to shared_boards table (or generate a hash)
     const { data, error } = await supabase
       .from('shared_boards')
       .insert([{ config: boardConfig }])
@@ -246,7 +272,6 @@ export default function DNABoard({ currentClass, onNavigate }) {
       setShareLink(link);
       setShowShareModal(true);
     } else {
-      // Fallback: encode in URL
       const encoded = btoa(JSON.stringify(boardConfig));
       const link = `${window.location.origin}?board=${encoded.slice(0, 50)}...`;
       setShareLink(link);
@@ -298,23 +323,34 @@ export default function DNABoard({ currentClass, onNavigate }) {
             <div className="card-header">
               <div className="card-number">{index + 1}</div>
               <div className="card-topic">{card.isReview ? "↺ " : ""}{card.topic}</div>
+              
               <div className="card-actions">
+                {/* Difficulty Dots */}
+                {!card.isReview && (
+                  <div className="diff-controls">
+                    <button className="diff-dot" onClick={(e) => changeDifficulty(e, index, 1)} title="Level 1"><Icon name="level1" size={14} /></button>
+                    <button className="diff-dot" onClick={(e) => changeDifficulty(e, index, 2)} title="Level 2"><Icon name="level2" size={14} /></button>
+                    <button className="diff-dot" onClick={(e) => changeDifficulty(e, index, 3)} title="Level 3"><Icon name="level3" size={14} /></button>
+                  </div>
+                )}
+
+                {/* Zoom Icons */}
                 <div className="zoom-controls">
-                  <button className="zoom-btn" onClick={(e) => changeFontSize(e, index, -0.2)}>−</button>
-                  <button className="zoom-btn" onClick={(e) => changeFontSize(e, index, 0.2)}>+</button>
+                  <button className="zoom-btn" onClick={(e) => changeFontSize(e, index, -0.2)}><Icon name="zoomOut" size={16} /></button>
+                  <button className="zoom-btn" onClick={(e) => changeFontSize(e, index, 0.2)}><Icon name="zoomIn" size={16} /></button>
                 </div>
+
                 {!card.isReview && (
                   <>
-                    <button className="card-btn" onClick={(e) => refreshCard(e, index)}>↻</button>
-                    <button className="card-btn" onClick={(e) => swapTopic(e, index)}>⟳</button>
+                    <button className="card-btn" onClick={(e) => refreshCard(e, index)} title="Regenerate Numbers">↻</button>
+                    <button className="card-btn" onClick={(e) => swapTopic(e, index)} title="Swap Topic">⟳</button>
                   </>
                 )}
               </div>
             </div>
 
             <div className={`card-content ${card.revealed ? 'revealed-mode' : ''}`}>
-              
-              {/* Display Generated Image if available */}
+              {/* Image */}
               {card.currentImage && (
                 <div 
                   className="question-image" 
@@ -395,26 +431,6 @@ const boardStyles = `
     max-width: 1400px;
     margin: 0 auto;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  }
-
-  /* Updated Image Container */
-  .question-image {
-    height: 180px; /* Fixed height creates a consistent 'stage' */
-    width: 100%;
-    display: flex;
-    align-items: center;   /* Vertically center */
-    justify-content: center; /* Horizontally center */
-    margin-bottom: 16px;
-    padding: 10px; /* Add breathing room */
-  }
-
-  /* Force SVG to scale to container */
-  .question-image svg {
-    width: auto !important;  /* Override DB attribute */
-    height: auto !important; /* Override DB attribute */
-    max-width: 100%;
-    max-height: 100%;
-    display: block;
   }
 
   /* Header */
@@ -532,25 +548,26 @@ const boardStyles = `
   }
 
   .card-header {
-    padding: 12px 16px;
+    padding: 8px 12px;
     border-bottom: 1px solid #f1f5f9;
     display: flex;
     align-items: center;
     gap: 10px;
     background: #fafafa;
+    min-height: 48px;
   }
 
   .card-number {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
     color: white;
-    border-radius: 8px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 800;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     flex-shrink: 0;
   }
 
@@ -558,7 +575,7 @@ const boardStyles = `
     flex: 1;
     font-weight: 600;
     color: #64748b;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     overflow: hidden;
@@ -569,10 +586,43 @@ const boardStyles = `
   .card-actions {
     display: flex;
     gap: 4px;
+    align-items: center;
+  }
+
+  .diff-controls {
+    display: flex;
+    gap: 2px;
+    background: #f1f5f9;
+    padding: 2px 4px;
+    border-radius: 6px;
+    margin-right: 4px;
+  }
+
+  .diff-dot {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+
+  .diff-dot:hover {
+    color: #0d9488;
+    background: white;
   }
 
   .zoom-controls {
     display: flex;
+    gap: 2px;
+    border-left: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    padding: 0 4px;
+    margin-right: 4px;
   }
 
   .zoom-btn {
@@ -581,7 +631,10 @@ const boardStyles = `
     color: #94a3b8;
     cursor: pointer;
     font-size: 1rem;
-    padding: 4px 8px;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: color 0.2s;
   }
 
@@ -615,6 +668,25 @@ const boardStyles = `
     padding: 20px;
     text-align: center;
     overflow: auto;
+  }
+
+  /* Question Image Styling */
+  .question-image {
+    height: 180px; 
+    width: 100%;
+    display: flex;
+    align-items: center;   
+    justify-content: center;
+    margin-bottom: 16px;
+    padding: 10px;
+  }
+
+  .question-image svg {
+    width: auto !important; 
+    height: auto !important; 
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
   }
 
   .question-text {
