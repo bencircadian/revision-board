@@ -159,29 +159,42 @@ export default function DNABoard({ currentClass, onNavigate }) {
     }
   };
 
-  const changeDifficulty = async (e, index, level) => {
+ const changeDifficulty = async (e, index, level) => {
     e.preventDefault(); e.stopPropagation();
     
     const currentCard = cards[index];
-    const difficultyMap = { 1: '•', 2: '••', 3: '•••' };
-    const targetDiff = difficultyMap[level];
-
-    // Find a question with the same skill/topic but new difficulty
-    // Prefer skill_name if available, otherwise topic
-    let query = supabase.from('questions').select('*').eq('difficulty', targetDiff);
     
+    // Search for ANY valid format for the requested level
+    const difficultyVariations = {
+      1: ['•', '1', 'Level 1', 'Easy', 'easy'],
+      2: ['••', '2', 'Level 2', 'Medium', 'medium'],
+      3: ['•••', '3', 'Level 3', 'Hard', 'hard']
+    };
+    
+    const targets = difficultyVariations[level] || [];
+
+    // Query DB for matching topic AND any of the valid difficulty formats
+    let query = supabase.from('questions')
+      .select('*')
+      .in('difficulty', targets);
+    
+    // Ensure we keep the same skill or topic
     if (currentCard.skill_name) {
       query = query.eq('skill_name', currentCard.skill_name);
     } else if (currentCard.topic) {
       query = query.eq('topic', currentCard.topic);
     }
 
-    const { data } = await query;
+    const { data, error } = await query;
 
     if (data && data.length > 0) {
+      // Pick a random question from the results
       const randomQ = data[Math.floor(Math.random() * data.length)];
+      
+      // Run the generator for the new question
       const generated = runGenerator(randomQ.generator_code);
       
+      // Update the card
       setCards(prev => prev.map((c, i) => i === index ? {
         ...randomQ,
         slotKey: c.slotKey,
@@ -193,10 +206,11 @@ export default function DNABoard({ currentClass, onNavigate }) {
         isReview: false
       } : c));
       
-      // Clear rating for this card as it's a new question
+      // Reset the rating for this card since it's a new question
       setRatings(prev => { const n = { ...prev }; delete n[index]; return n; });
     } else {
-      alert(`No questions found for Level ${level} in this topic.`);
+      console.warn("Difficulty swap failed:", error);
+      alert(`No questions found for Level ${level} in this topic/skill.`);
     }
   };
 
