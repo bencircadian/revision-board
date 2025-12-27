@@ -66,3 +66,13 @@ body { font-family: var(--font-ui); background-color: var(--bg); color: var(--te
 .fade-exit-active { opacity: 0; transition: opacity 200ms ease-out; }
 
 @media print { .sidebar, .mobile-header { display: none !important; } .main-content { margin-left: 0 !important; padding-top: 0 !important; } }
+
+/* Add a white outline to all SVG text inside the DNA board */
+.question-image text {
+  paint-order: stroke fill;
+  stroke: white;
+  stroke-width: 4px; /* Adjust thickness as needed */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  font-weight: bold; /* Optional, helps legibility */
+}
