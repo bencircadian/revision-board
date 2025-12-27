@@ -96,7 +96,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
     const finalBoard = [
       ...reviewQuestions.map(q => ({
         ...q, currentQ: q.question_text, currentA: q.answer_text,
-        revealed: false, fontSize: 1.15, isReview: true // Reduced default font size
+        revealed: false, fontSize: 0.95, isReview: true // Reduced default font size to 0.95
       })),
       ...newQuestions.map(q => {
         const generated = runGenerator(q.generator_code);
@@ -105,7 +105,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
           currentQ: generated.q, 
           currentA: generated.a,
           currentImage: generated.image,
-          revealed: false, fontSize: 1.15, isReview: false // Reduced default font size
+          revealed: false, fontSize: 0.95, isReview: false // Reduced default font size to 0.95
         };
       })
     ];
@@ -204,7 +204,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
       setCards(prev => prev.map((c, i) => i === index ? {
         ...randomQ, slotKey: c.slotKey, currentQ: generated.q, currentA: generated.a,
         currentImage: generated.image,
-        revealed: false, fontSize: 1.15, isReview: false
+        revealed: false, fontSize: 0.95, isReview: false
       } : c));
       setRatings(prev => { const n = { ...prev }; delete n[index]; return n; });
     }
@@ -334,7 +334,6 @@ export default function DNABoard({ currentClass, onNavigate }) {
             </div>
 
             <div className={`card-content ${card.revealed ? 'revealed-mode' : ''}`}>
-              {/* Image Container - Grows to fill space */}
               {card.currentImage && (
                 <div 
                   className="question-image" 
@@ -497,15 +496,16 @@ const boardStyles = `
     min-height: 0;
   }
 
-  /* Image - Takes Priority */
+  /* Image - Takes Priority with min-height safety */
   .question-image {
-    flex: 1; /* Grow to fill all available space */
+    flex: 1; 
     width: 100%;
+    min-height: 140px; /* Guarantees image doesn't get crushed by text */
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 4px;
-    min-height: 0; /* Allow shrinking if absolutely necessary */
+    padding: 4px;
   }
   .question-image svg {
     width: auto !important;
@@ -515,7 +515,7 @@ const boardStyles = `
     vector-effect: non-scaling-stroke;
   }
 
-  /* Text - Don't grow unnecessarily */
+  /* Text - Tight layout */
   .question-text {
     flex-shrink: 0;
     font-size: 1.1rem;
@@ -524,6 +524,7 @@ const boardStyles = `
     transition: opacity 0.3s ease;
     width: 100%;
     padding-bottom: 4px;
+    line-height: 1.3; /* Tighten lines so they take less vertical space */
   }
   .card-content.revealed-mode .question-text { opacity: 0.65; }
 
