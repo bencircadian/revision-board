@@ -96,7 +96,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
     const finalBoard = [
       ...reviewQuestions.map(q => ({
         ...q, currentQ: q.question_text, currentA: q.answer_text,
-        revealed: false, fontSize: 1.4, isReview: true
+        revealed: false, fontSize: 1.15, isReview: true // Reduced default font size
       })),
       ...newQuestions.map(q => {
         const generated = runGenerator(q.generator_code);
@@ -105,7 +105,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
           currentQ: generated.q, 
           currentA: generated.a,
           currentImage: generated.image,
-          revealed: false, fontSize: 1.4, isReview: false
+          revealed: false, fontSize: 1.15, isReview: false // Reduced default font size
         };
       })
     ];
@@ -159,42 +159,26 @@ export default function DNABoard({ currentClass, onNavigate }) {
     }
   };
 
- const changeDifficulty = async (e, index, level) => {
+  const changeDifficulty = async (e, index, level) => {
     e.preventDefault(); e.stopPropagation();
-    
     const currentCard = cards[index];
     
-    // Search for ANY valid format for the requested level
     const difficultyVariations = {
       1: ['•', '1', 'Level 1', 'Easy', 'easy'],
       2: ['••', '2', 'Level 2', 'Medium', 'medium'],
       3: ['•••', '3', 'Level 3', 'Hard', 'hard']
     };
-    
     const targets = difficultyVariations[level] || [];
 
-    // Query DB for matching topic AND any of the valid difficulty formats
-    let query = supabase.from('questions')
-      .select('*')
-      .in('difficulty', targets);
-    
-    // Ensure we keep the same skill or topic
-    if (currentCard.skill_name) {
-      query = query.eq('skill_name', currentCard.skill_name);
-    } else if (currentCard.topic) {
-      query = query.eq('topic', currentCard.topic);
-    }
+    let query = supabase.from('questions').select('*').in('difficulty', targets);
+    if (currentCard.skill_name) query = query.eq('skill_name', currentCard.skill_name);
+    else if (currentCard.topic) query = query.eq('topic', currentCard.topic);
 
-    const { data, error } = await query;
+    const { data } = await query;
 
     if (data && data.length > 0) {
-      // Pick a random question from the results
       const randomQ = data[Math.floor(Math.random() * data.length)];
-      
-      // Run the generator for the new question
       const generated = runGenerator(randomQ.generator_code);
-      
-      // Update the card
       setCards(prev => prev.map((c, i) => i === index ? {
         ...randomQ,
         slotKey: c.slotKey,
@@ -205,12 +189,9 @@ export default function DNABoard({ currentClass, onNavigate }) {
         fontSize: c.fontSize, 
         isReview: false
       } : c));
-      
-      // Reset the rating for this card since it's a new question
       setRatings(prev => { const n = { ...prev }; delete n[index]; return n; });
     } else {
-      console.warn("Difficulty swap failed:", error);
-      alert(`No questions found for Level ${level} in this topic/skill.`);
+      alert(`No questions found for Level ${level} in this topic.`);
     }
   };
 
@@ -223,7 +204,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
       setCards(prev => prev.map((c, i) => i === index ? {
         ...randomQ, slotKey: c.slotKey, currentQ: generated.q, currentA: generated.a,
         currentImage: generated.image,
-        revealed: false, fontSize: 1.4, isReview: false
+        revealed: false, fontSize: 1.15, isReview: false
       } : c));
       setRatings(prev => { const n = { ...prev }; delete n[index]; return n; });
     }
@@ -313,33 +294,25 @@ export default function DNABoard({ currentClass, onNavigate }) {
 
   return (
     <div className="dna-board">
-      {/* Board Header */}
       <header className="board-header">
         <div className="header-left">
           <button className="btn-back" onClick={() => onNavigate('dashboard')}>← Back</button>
           <h1>{currentClass?.name || "Custom DNA"}</h1>
         </div>
-        <div className="header-center">
-          <span className="date">{dateStr}</span>
-        </div>
+        <div className="header-center"><span className="date">{dateStr}</span></div>
         <div className="header-right">
-          <button className="btn-share" onClick={generateShareLink}>
-            <><Icon name="link" size={16} /> Share Board</>
-          </button>
+          <button className="btn-share" onClick={generateShareLink}><Icon name="link" size={16} /> Share</button>
           <button className="btn-reset" onClick={() => setRatings({})}>Reset</button>
         </div>
       </header>
 
-      {/* Questions Grid */}
       <div className="questions-grid">
         {cards.map((card, index) => (
           <div key={card.slotKey} className="question-card">
             <div className="card-header">
               <div className="card-number">{index + 1}</div>
               <div className="card-topic">{card.isReview ? "↺ " : ""}{card.topic}</div>
-              
               <div className="card-actions">
-                {/* Difficulty Dots */}
                 {!card.isReview && (
                   <div className="diff-controls">
                     <button className="diff-dot" onClick={(e) => changeDifficulty(e, index, 1)} title="Level 1"><Icon name="level1" size={14} /></button>
@@ -347,24 +320,21 @@ export default function DNABoard({ currentClass, onNavigate }) {
                     <button className="diff-dot" onClick={(e) => changeDifficulty(e, index, 3)} title="Level 3"><Icon name="level3" size={14} /></button>
                   </div>
                 )}
-
-                {/* Zoom Icons */}
                 <div className="zoom-controls">
                   <button className="zoom-btn" onClick={(e) => changeFontSize(e, index, -0.2)}><Icon name="zoomOut" size={16} /></button>
                   <button className="zoom-btn" onClick={(e) => changeFontSize(e, index, 0.2)}><Icon name="zoomIn" size={16} /></button>
                 </div>
-
                 {!card.isReview && (
                   <>
-                    <button className="card-btn" onClick={(e) => refreshCard(e, index)} title="Regenerate Numbers">↻</button>
-                    <button className="card-btn" onClick={(e) => swapTopic(e, index)} title="Swap Topic">⟳</button>
+                    <button className="card-btn" onClick={(e) => refreshCard(e, index)} title="Regenerate">↻</button>
+                    <button className="card-btn" onClick={(e) => swapTopic(e, index)} title="Swap">⟳</button>
                   </>
                 )}
               </div>
             </div>
 
             <div className={`card-content ${card.revealed ? 'revealed-mode' : ''}`}>
-              {/* Image */}
+              {/* Image Container - Grows to fill space */}
               {card.currentImage && (
                 <div 
                   className="question-image" 
@@ -395,15 +365,12 @@ export default function DNABoard({ currentClass, onNavigate }) {
                   <div className="reveal-hint">Reveal to grade</div>
                 )}
               </div>
-              <button className="reveal-btn" onClick={() => toggleReveal(index)}>
-                {card.revealed ? 'Hide' : 'Reveal'}
-              </button>
+              <button className="reveal-btn" onClick={() => toggleReveal(index)}>{card.revealed ? 'Hide' : 'Reveal'}</button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Save Modal */}
       {showSaveModal && (
         <div className="modal-backdrop">
           <div className="modal-box">
@@ -417,7 +384,6 @@ export default function DNABoard({ currentClass, onNavigate }) {
         </div>
       )}
 
-      {/* Share Modal */}
       {showShareModal && (
         <div className="modal-backdrop">
           <div className="modal-box">
@@ -441,274 +407,117 @@ export default function DNABoard({ currentClass, onNavigate }) {
 
 const boardStyles = `
   .dna-board {
-    padding: 16px 24px;
+    padding: 12px 20px;
     max-width: 100%;
-    height: 100vh; /* Lock page height */
+    height: 100vh;
     display: flex;
     flex-direction: column;
     margin: 0 auto;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     box-sizing: border-box;
-    overflow: hidden; /* Prevent page scroll */
+    overflow: hidden;
   }
 
-  /* Header */
   .board-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    padding-bottom: 12px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
     border-bottom: 1px solid #e2e8f0;
-    flex-shrink: 0; /* Prevent header from shrinking */
+    flex-shrink: 0;
   }
 
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .btn-back { background: #f1f5f9; border: none; padding: 6px 12px; border-radius: 8px; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s; }
+  .btn-back:hover { background: #e2e8f0; color: #334155; }
+  .board-header h1 { font-size: 1.2rem; font-weight: 700; color: #1e293b; margin: 0; }
+  .header-center .date { color: #64748b; font-size: 0.9rem; }
+  .header-right { display: flex; gap: 8px; }
+  .btn-share, .btn-reset { padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px; }
+  .btn-share { background: #f0fdfa; border: 1px solid #99f6e4; color: #0d9488; }
+  .btn-share:hover { background: #ccfbf1; }
+  .btn-reset { background: #f1f5f9; border: 1px solid #e2e8f0; color: #64748b; }
+  .btn-reset:hover { background: #e2e8f0; }
 
-  .btn-back {
-    background: #f1f5f9;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-weight: 600;
-    color: #64748b;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-back:hover {
-    background: #e2e8f0;
-    color: #334155;
-  }
-
-  .board-header h1 {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0;
-  }
-
-  .header-center .date {
-    color: #64748b;
-    font-size: 0.9rem;
-  }
-
-  .header-right {
-    display: flex;
-    gap: 12px;
-  }
-
-  .btn-share, .btn-reset {
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-share {
-    background: #f0fdfa;
-    border: 1px solid #99f6e4;
-    color: #0d9488;
-  }
-
-  .btn-share:hover {
-    background: #ccfbf1;
-  }
-
-  .btn-reset {
-    background: #f1f5f9;
-    border: 1px solid #e2e8f0;
-    color: #64748b;
-  }
-
-  .btn-reset:hover {
-    background: #e2e8f0;
-  }
-
-  /* Grid - The Magic Fix */
+  /* Grid Layout - 2 rows, equal height, no scroll */
   .questions-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    /* Force 2 equal rows that fill remaining height */
-    grid-template-rows: repeat(2, minmax(0, 1fr)); 
-    gap: 16px;
-    /* Calculate remaining height: 100vh - header(~70px) - padding(~32px) */
-    height: calc(100vh - 120px); 
-    width: 100%;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    flex: 1; /* Fill remaining height */
+    min-height: 0;
   }
 
-  /* Card */
   .question-card {
     background: white;
-    border-radius: 16px;
+    border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     border: 1px solid #f1f5f9;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Ensure nothing spills out */
-    height: 100%; /* Fill the grid cell */
+    overflow: hidden;
+    height: 100%;
     transition: box-shadow 0.2s;
   }
+  .question-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
 
-  .question-card:hover {
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-  }
-
+  /* Compact Header */
   .card-header {
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-bottom: 1px solid #f1f5f9;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     background: #fafafa;
-    min-height: 44px;
+    min-height: 40px;
     flex-shrink: 0;
   }
+  .card-number { width: 22px; height: 22px; background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%); color: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; flex-shrink: 0; }
+  .card-topic { flex: 1; font-weight: 600; color: #64748b; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card-actions { display: flex; gap: 4px; align-items: center; }
+  
+  .diff-controls, .zoom-controls { display: flex; gap: 1px; background: #f1f5f9; padding: 1px 3px; border-radius: 4px; }
+  .diff-dot, .zoom-btn { background: transparent; border: none; cursor: pointer; color: #94a3b8; padding: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .diff-dot:hover, .zoom-btn:hover { color: #0d9488; background: white; border-radius: 2px; }
+  .card-btn { background: #f1f5f9; border: none; border-radius: 4px; cursor: pointer; font-size: 0.75rem; padding: 3px 6px; color: #64748b; transition: all 0.2s; }
+  .card-btn:hover { background: #e2e8f0; color: #334155; }
 
-  .card-number {
-    width: 24px;
-    height: 24px;
-    background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
-    color: white;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 0.75rem;
-    flex-shrink: 0;
-  }
-
-  .card-topic {
-    flex: 1;
-    font-weight: 600;
-    color: #64748b;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .card-actions {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-  }
-
-  .diff-controls {
-    display: flex;
-    gap: 2px;
-    background: #f1f5f9;
-    padding: 2px 4px;
-    border-radius: 6px;
-    margin-right: 4px;
-  }
-
-  .diff-dot {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: #94a3b8;
-    padding: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    transition: all 0.2s;
-  }
-
-  .diff-dot:hover {
-    color: #0d9488;
-    background: white;
-  }
-
-  .zoom-controls {
-    display: flex;
-    gap: 2px;
-    border-left: 1px solid #e2e8f0;
-    border-right: 1px solid #e2e8f0;
-    padding: 0 4px;
-    margin-right: 4px;
-  }
-
-  .zoom-btn {
-    background: transparent;
-    border: none;
-    color: #94a3b8;
-    cursor: pointer;
-    font-size: 1rem;
-    padding: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.2s;
-  }
-
-  .zoom-btn:hover {
-    color: #334155;
-  }
-
-  .card-btn {
-    background: #f1f5f9;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.75rem;
-    padding: 4px 8px;
-    color: #64748b;
-    transition: all 0.2s;
-  }
-
-  .card-btn:hover {
-    background: #e2e8f0;
-    color: #334155;
-  }
-
-  /* Card Content - Flexible Layout */
+  /* Flexible Content */
   .card-content {
-    flex: 1; /* Takes all remaining height */
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; /* Center content vertically */
-    padding: 8px 16px;
+    justify-content: center;
+    padding: 4px 12px;
     text-align: center;
-    overflow: hidden; /* Stop scrollbars inside cards */
-    min-height: 0; /* Crucial for flex nested scrolling */
+    overflow: hidden;
+    min-height: 0;
   }
 
-  /* Question Image - Flexible Scale */
+  /* Image - Takes Priority */
   .question-image {
-    flex: 1; /* Grow to fill space */
+    flex: 1; /* Grow to fill all available space */
     width: 100%;
     display: flex;
-    align-items: center;   
+    align-items: center;
     justify-content: center;
-    margin-bottom: 8px;
-    min-height: 0; /* Allow shrinking if text is huge */
-    padding: 4px;
+    margin-bottom: 4px;
+    min-height: 0; /* Allow shrinking if absolutely necessary */
   }
-
-  /* Force SVG to contain itself within the flex box */
   .question-image svg {
     width: auto !important;
-    height: auto !important;
+    height: 100% !important; /* Force scale to full container height */
     max-width: 100%;
-    max-height: 100%;
     display: block;
     vector-effect: non-scaling-stroke;
   }
 
+  /* Text - Don't grow unnecessarily */
   .question-text {
-    flex-shrink: 0; /* Don't shrink text if possible */
+    flex-shrink: 0;
     font-size: 1.1rem;
     font-weight: 500;
     color: #1e293b;
@@ -716,222 +525,46 @@ const boardStyles = `
     width: 100%;
     padding-bottom: 4px;
   }
+  .card-content.revealed-mode .question-text { opacity: 0.65; }
 
-  .card-content.revealed-mode .question-text {
-    opacity: 0.65;
-  }
+  .answer-section { width: 100%; padding-top: 0; border-top: 1px dashed #e2e8f0; max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s ease; flex-shrink: 0; }
+  .answer-section.visible { max-height: 80px; opacity: 1; padding-top: 6px; }
+  .answer-text { font-size: 1.1rem; font-weight: 700; color: #16a34a; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); padding: 6px 14px; border-radius: 8px; display: inline-block; border: 1px solid #bbf7d0; }
 
-  .answer-section {
-    width: 100%;
-    margin-top: 8px;
-    padding-top: 0;
-    border-top: 1px dashed #e2e8f0;
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-  }
-
-  .answer-section.visible {
-    max-height: 100px;
-    opacity: 1;
-    padding-top: 8px;
-  }
-
-  .answer-text {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #16a34a;
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    padding: 8px 16px;
-    border-radius: 10px;
-    display: inline-block;
-    border: 1px solid #bbf7d0;
-  }
-
-  /* Card Footer */
-  .card-footer {
-    padding: 8px 12px;
-    border-top: 1px solid #f1f5f9;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #fafafa;
-    flex-shrink: 0;
-    min-height: 48px;
-  }
-
-  .perf-buttons {
-    display: flex;
-    gap: 6px;
-  }
-
-  .reveal-hint {
-    color: #94a3b8;
-    font-size: 0.75rem;
-    font-style: italic;
-  }
-
-  .perf-btn {
-    padding: 6px 10px;
-    border-radius: 6px;
-    border: 1px solid #e2e8f0;
-    font-weight: 700;
-    font-size: 0.65rem;
-    cursor: pointer;
-    color: #94a3b8;
-    background: white;
-    transition: all 0.15s ease;
-  }
-
+  /* Compact Footer */
+  .card-footer { padding: 6px 10px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #fafafa; flex-shrink: 0; min-height: 40px; }
+  .perf-buttons { display: flex; gap: 4px; }
+  .reveal-hint { color: #94a3b8; font-size: 0.7rem; font-style: italic; }
+  .perf-btn { padding: 4px 8px; border-radius: 4px; border: 1px solid #e2e8f0; font-weight: 700; font-size: 0.6rem; cursor: pointer; color: #94a3b8; background: white; transition: all 0.15s ease; }
   .perf-btn.btn-100.active { background: #16a34a; color: white; border-color: #16a34a; }
   .perf-btn.btn-most.active { background: #86efac; color: #14532d; border-color: #86efac; }
   .perf-btn.btn-some.active { background: #fde047; color: #713f12; border-color: #fde047; }
   .perf-btn.btn-nope.active { background: #ef4444; color: white; border-color: #ef4444; }
+  .reveal-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid #e2e8f0; font-weight: 600; font-size: 0.75rem; cursor: pointer; background: white; color: #0d9488; transition: all 0.15s ease; }
+  .reveal-btn:hover { background: #f0fdfa; border-color: #99f6e4; }
 
-  .reveal-btn {
-    padding: 6px 14px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    font-weight: 600;
-    font-size: 0.8rem;
-    cursor: pointer;
-    background: white;
-    color: #0d9488;
-    transition: all 0.15s ease;
-  }
+  /* Modals - Keep existing style */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+  .modal-box { background: white; padding: 32px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; max-width: 420px; width: 90%; }
+  .modal-box h3 { margin: 0 0 12px 0; font-size: 1.4rem; color: #1e293b; }
+  .modal-box p { color: #64748b; margin-bottom: 24px; }
+  .share-link-box { display: flex; gap: 8px; margin-bottom: 24px; }
+  .share-link-box input { flex: 1; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.85rem; background: #f8fafc; }
+  .share-link-box button { padding: 12px 20px; background: #0d9488; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+  .modal-actions { display: flex; gap: 12px; justify-content: center; }
+  .btn-cancel, .btn-confirm { padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+  .btn-cancel { background: #f1f5f9; color: #64748b; }
+  .btn-cancel:hover { background: #e2e8f0; }
+  .btn-confirm { background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); color: white; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25); }
+  .btn-confirm:hover { box-shadow: 0 6px 16px rgba(13, 148, 136, 0.35); }
 
-  .reveal-btn:hover {
-    background: #f0fdfa;
-    border-color: #99f6e4;
-  }
-
-  /* Modals */
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-  }
-
-  .modal-box {
-    background: white;
-    padding: 32px;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    text-align: center;
-    max-width: 420px;
-    width: 90%;
-  }
-
-  .modal-box h3 {
-    margin: 0 0 12px 0;
-    font-size: 1.4rem;
-    color: #1e293b;
-  }
-
-  .modal-box p {
-    color: #64748b;
-    margin-bottom: 24px;
-  }
-
-  .share-link-box {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 24px;
-  }
-
-  .share-link-box input {
-    flex: 1;
-    padding: 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    background: #f8fafc;
-  }
-
-  .share-link-box button {
-    padding: 12px 20px;
-    background: #0d9488;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .modal-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-  }
-
-  .btn-cancel, .btn-confirm {
-    padding: 12px 24px;
-    border-radius: 10px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-  }
-
-  .btn-cancel {
-    background: #f1f5f9;
-    color: #64748b;
-  }
-
-  .btn-cancel:hover {
-    background: #e2e8f0;
-  }
-
-  .btn-confirm {
-    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
-    color: white;
-    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
-  }
-
-  .btn-confirm:hover {
-    box-shadow: 0 6px 16px rgba(13, 148, 136, 0.35);
-  }
-
-  /* Responsive Mobile View: Disable the 'fit to screen' feature so they can scroll */
   @media (max-width: 768px) {
-    .dna-board {
-      padding: 16px;
-      height: auto; /* Allow scrolling on mobile */
-      overflow: auto;
-    }
-
-    .questions-grid {
-      display: flex;
-      flex-direction: column;
-      height: auto;
-    }
-
-    .question-card {
-      min-height: 300px;
-    }
-
-    .board-header {
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .header-left, .header-center, .header-right {
-      flex: 1 1 100%;
-      justify-content: center;
-    }
-
-    .header-right {
-      gap: 8px;
-    }
-
-    .board-header h1 {
-      font-size: 1.2rem;
-    }
+    .dna-board { padding: 16px; height: auto; overflow: auto; }
+    .questions-grid { display: flex; flex-direction: column; height: auto; }
+    .question-card { min-height: 300px; }
+    .board-header { flex-wrap: wrap; gap: 12px; }
+    .header-left, .header-center, .header-right { flex: 1 1 100%; justify-content: center; }
+    .header-right { gap: 8px; }
+    .board-header h1 { font-size: 1.2rem; }
   }
 `;
