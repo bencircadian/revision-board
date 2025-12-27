@@ -40,7 +40,6 @@ const MathDisplay = ({ text, fontSize }) => {
       }
     } else {
       // Simple text + numbers - just use HTML with nice font
-      // Replace × ÷ − with proper symbols if needed
       containerRef.current.innerHTML = `<span style="font-family: 'KaTeX_Main', 'Times New Roman', serif;">${content}</span>`;
     }
   }, [text]);
@@ -112,7 +111,10 @@ export default function DNABoard({ currentClass, onNavigate }) {
       ...newQuestions.map(q => {
         const generated = runGenerator(q.generator_code);
         return {
-          ...q, currentQ: generated.q, currentA: generated.a,
+          ...q, 
+          currentQ: generated.q, 
+          currentA: generated.a,
+          currentImage: generated.image, // Capture the image
           revealed: false, fontSize: 1.4, isReview: false
         };
       })
@@ -134,7 +136,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
       return { 
         q: result.q ?? "Missing question", 
         a: result.a ?? "-",
-        image: result.image // <--- ADD THIS LINE
+        image: result.image 
       };
     } catch (e) { 
       console.error('Generator error:', e);
@@ -155,7 +157,13 @@ export default function DNABoard({ currentClass, onNavigate }) {
     if (card?.generator_code) {
       const generated = runGenerator(card.generator_code);
       setCards(prev => prev.map((c, i) => 
-        i === index ? { ...c, currentQ: generated.q, currentA: generated.a, revealed: false } : c
+        i === index ? { 
+          ...c, 
+          currentQ: generated.q, 
+          currentA: generated.a, 
+          currentImage: generated.image, // Update image on refresh
+          revealed: false 
+        } : c
       ));
       setRatings(prev => { const n = { ...prev }; delete n[index]; return n; });
     }
@@ -168,7 +176,11 @@ export default function DNABoard({ currentClass, onNavigate }) {
       const randomQ = data[Math.floor(Math.random() * data.length)];
       const generated = runGenerator(randomQ.generator_code);
       setCards(prev => prev.map((c, i) => i === index ? {
-        ...randomQ, slotKey: c.slotKey, currentQ: generated.q, currentA: generated.a,
+        ...randomQ, 
+        slotKey: c.slotKey, 
+        currentQ: generated.q, 
+        currentA: generated.a,
+        currentImage: generated.image, // Update image on swap
         revealed: false, fontSize: 1.4, isReview: false
       } : c));
       setRatings(prev => { const n = { ...prev }; delete n[index]; return n; });
@@ -301,6 +313,16 @@ export default function DNABoard({ currentClass, onNavigate }) {
             </div>
 
             <div className={`card-content ${card.revealed ? 'revealed-mode' : ''}`}>
+              
+              {/* Display Generated Image if available */}
+              {card.currentImage && (
+                <div 
+                  className="question-image" 
+                  style={{ marginBottom: '16px', maxWidth: '100%', display: 'flex', justifyContent: 'center' }}
+                  dangerouslySetInnerHTML={{ __html: card.currentImage }} 
+                />
+              )}
+
               <div className="question-text">
                 <MathDisplay text={card.currentQ} fontSize={card.fontSize} />
               </div>
