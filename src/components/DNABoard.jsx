@@ -130,11 +130,11 @@ export default function DNABoard({ currentClass, onNavigate }) {
     try {
       if (!code) return { q: "No question available", a: "-" };
       const result = new Function(code)();
-      // Handle undefined/null/empty results
       if (!result || typeof result !== 'object') return { q: "Error generating question", a: "-" };
       return { 
         q: result.q ?? "Missing question", 
-        a: result.a ?? "-" 
+        a: result.a ?? "-",
+        image: result.image // <--- ADD THIS LINE
       };
     } catch (e) { 
       console.error('Generator error:', e);
