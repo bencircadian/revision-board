@@ -251,7 +251,6 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                     const newDifficulty = '••';
                     setSelections([...selections, { id: newId, skill, difficulty: newDifficulty }]);
                     generatePreview(newId, skill, newDifficulty);
-                    setSearchTerm('');
                   }
                 }}
                 disabled={selections.length >= 6}
