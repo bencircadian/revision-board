@@ -63,6 +63,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
         [rowId]: { 
           q: generated.q, 
           a: generated.a, 
+          image: generated.image, // Store image in preview
           questionData: randomQ,
           hasMatchingDifficulty: matchingQuestions.length > 0
         } 
@@ -73,6 +74,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
         [rowId]: { 
           q: 'No questions available', 
           a: '-', 
+          image: null,
           questionData: null,
           hasMatchingDifficulty: false
         } 
@@ -139,11 +141,14 @@ export default function CreateDNA({ onGenerate, onCancel }) {
       const preview = previews[selection.id];
       
       if (preview?.questionData) {
+        // Re-run generator to ensure fresh randomness, or use preview data
+        // Let's re-run to ensure 'image' is definitely captured if preview was old
         const generated = runGenerator(preview.questionData.generator_code);
         generatedCards.push({
           ...preview.questionData,
           currentQ: generated.q,
           currentA: generated.a,
+          currentImage: generated.image, // <--- IMPORTANT: Pass image to board
           revealed: false,
           fontSize: 1.4,
           isReview: false
@@ -163,6 +168,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
             ...randomQ,
             currentQ: generated.q,
             currentA: generated.a,
+            currentImage: generated.image, // <--- IMPORTANT: Pass image to board
             revealed: false,
             fontSize: 1.4,
             isReview: false
@@ -192,7 +198,8 @@ export default function CreateDNA({ onGenerate, onCancel }) {
       if (!result || typeof result !== 'object') return { q: "Error generating question", a: "-" };
       return { 
         q: result.q ?? "Missing question", 
-        a: result.a ?? "-" 
+        a: result.a ?? "-",
+        image: result.image // <--- Capture image property here
       };
     } catch (e) { 
       return { q: "Error in question", a: "-" }; 
@@ -331,6 +338,14 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                   
                   <div className={`preview-panel ${noMatchWarning ? 'no-match' : ''}`}>
                     <div className="preview-content">
+                      {/* Show Image in Preview if available */}
+                      {preview?.image && (
+                        <div 
+                          style={{marginBottom: '8px', maxHeight: '60px', overflow:'hidden'}} 
+                          dangerouslySetInnerHTML={{ __html: preview.image }} 
+                        />
+                      )}
+                      
                       {(preview?.q?.trim().startsWith('<') || preview?.a?.trim().startsWith('<')) ? (
                         <div className="preview-unavailable">Preview not available</div>
                       ) : (
