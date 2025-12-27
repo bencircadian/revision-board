@@ -3,45 +3,26 @@ import { supabase } from '../supabase';
 import { Icon } from './Icons';
 import Latex from 'react-latex-next';
 
-// Math Display Component
 const MathDisplay = ({ text, fontSize }) => {
-  const containerRef = useRef(null);
+  if (!text || text === '-') return <span>-</span>;
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-    
-    let content = text || "";
-    
-    // If it contains SVG, render as HTML directly
-    if (content.includes('<svg') || content.includes('<SVG')) {
-      containerRef.current.innerHTML = content;
-      return;
-    }
-    
-    // Check if content actually needs KaTeX
-    const needsKatex = /\\frac|\\sqrt|\^|_\{|\\times|\\div|\\pm|\\leq|\\geq|\\neq|\$/.test(content);
-    
-    if (needsKatex) {
-      if (content.includes('$')) {
-        content = content.replace(/\$([^$]+)\$/g, (match, latex) => {
-          try {
-            return window.katex.renderToString(latex, { throwOnError: false });
-          } catch (e) { return match; }
-        });
-        containerRef.current.innerHTML = content;
-      } else {
-        try {
-          containerRef.current.innerHTML = window.katex.renderToString(content, { throwOnError: false });
-        } catch (e) {
-          containerRef.current.textContent = content;
-        }
-      }
-    } else {
-      containerRef.current.innerHTML = `<span style="font-family: 'KaTeX_Main', 'Times New Roman', serif;">${content}</span>`;
-    }
-  }, [text]);
+  // If it's an SVG image code (from your generator), render it as HTML
+  if (text.includes('<svg')) {
+    return (
+       <div 
+         className="question-image" 
+         dangerouslySetInnerHTML={{ __html: text }} 
+         style={{ display: 'flex', justifyContent: 'center' }}
+       />
+    );
+  }
 
-  return <div ref={containerRef} style={{ fontSize: `${fontSize}rem` }} className="math-content" />;
+  // Otherwise, render as Math
+  return (
+    <div style={{ fontSize: `${fontSize}rem` }} className="math-content">
+      <Latex strict>{text}</Latex>
+    </div>
+  );
 };
 
 export default function DNABoard({ currentClass, onNavigate }) {
