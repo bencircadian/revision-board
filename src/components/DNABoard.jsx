@@ -318,7 +318,6 @@ export default function DNABoard({ currentClass, onNavigate }) {
               {card.currentImage && (
                 <div 
                   className="question-image" 
-                  style={{ marginBottom: '16px', maxWidth: '100%', display: 'flex', justifyContent: 'center' }}
                   dangerouslySetInnerHTML={{ __html: card.currentImage }} 
                 />
               )}
@@ -396,6 +395,26 @@ const boardStyles = `
     max-width: 1400px;
     margin: 0 auto;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  /* Updated Image Container */
+  .question-image {
+    height: 180px; /* Fixed height creates a consistent 'stage' */
+    width: 100%;
+    display: flex;
+    align-items: center;   /* Vertically center */
+    justify-content: center; /* Horizontally center */
+    margin-bottom: 16px;
+    padding: 10px; /* Add breathing room */
+  }
+
+  /* Force SVG to scale to container */
+  .question-image svg {
+    width: auto !important;  /* Override DB attribute */
+    height: auto !important; /* Override DB attribute */
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
   }
 
   /* Header */
