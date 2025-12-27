@@ -670,23 +670,25 @@ const boardStyles = `
     overflow: auto;
   }
 
-  /* Question Image Styling */
   .question-image {
-    height: 180px; 
+    height: 240px; /* Increased from 180px to 240px */
     width: 100%;
     display: flex;
     align-items: center;   
     justify-content: center;
     margin-bottom: 16px;
-    padding: 10px;
+    padding: 0; /* Removed padding so image touches edges if needed */
   }
 
+  /* Force SVG to scale to container */
   .question-image svg {
-    width: auto !important; 
-    height: auto !important; 
+    width: auto !important;
+    height: auto !important;
     max-width: 100%;
     max-height: 100%;
     display: block;
+    /* Ensure lines remain crisp when scaled up */
+    vector-effect: non-scaling-stroke; 
   }
 
   .question-text {
