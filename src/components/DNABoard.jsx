@@ -441,10 +441,15 @@ export default function DNABoard({ currentClass, onNavigate }) {
 
 const boardStyles = `
   .dna-board {
-    padding: 24px;
-    max-width: 1400px;
+    padding: 16px 24px;
+    max-width: 100%;
+    height: 100vh; /* Lock page height */
+    display: flex;
+    flex-direction: column;
     margin: 0 auto;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    box-sizing: border-box;
+    overflow: hidden; /* Prevent page scroll */
   }
 
   /* Header */
@@ -452,9 +457,10 @@ const boardStyles = `
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
     border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0; /* Prevent header from shrinking */
   }
 
   .header-left {
@@ -525,23 +531,16 @@ const boardStyles = `
     background: #e2e8f0;
   }
 
-  /* Grid */
+  /* Grid - The Magic Fix */
   .questions-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+    /* Force 2 equal rows that fill remaining height */
+    grid-template-rows: repeat(2, minmax(0, 1fr)); 
     gap: 16px;
-  }
-
-  @media (max-width: 1024px) {
-    .questions-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  @media (max-width: 640px) {
-    .questions-grid {
-      grid-template-columns: 1fr;
-    }
+    /* Calculate remaining height: 100vh - header(~70px) - padding(~32px) */
+    height: calc(100vh - 120px); 
+    width: 100%;
   }
 
   /* Card */
@@ -552,8 +551,8 @@ const boardStyles = `
     border: 1px solid #f1f5f9;
     display: flex;
     flex-direction: column;
-    min-height: 280px;
-    overflow: hidden;
+    overflow: hidden; /* Ensure nothing spills out */
+    height: 100%; /* Fill the grid cell */
     transition: box-shadow 0.2s;
   }
 
@@ -568,7 +567,8 @@ const boardStyles = `
     align-items: center;
     gap: 10px;
     background: #fafafa;
-    min-height: 48px;
+    min-height: 44px;
+    flex-shrink: 0;
   }
 
   .card-number {
@@ -672,45 +672,49 @@ const boardStyles = `
     color: #334155;
   }
 
-  /* Card Content */
+  /* Card Content - Flexible Layout */
   .card-content {
-    flex: 1;
+    flex: 1; /* Takes all remaining height */
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding: 20px;
+    justify-content: center; /* Center content vertically */
+    padding: 8px 16px;
     text-align: center;
-    overflow: auto;
+    overflow: hidden; /* Stop scrollbars inside cards */
+    min-height: 0; /* Crucial for flex nested scrolling */
   }
 
+  /* Question Image - Flexible Scale */
   .question-image {
-    height: 240px; /* Increased from 180px to 240px */
+    flex: 1; /* Grow to fill space */
     width: 100%;
     display: flex;
     align-items: center;   
     justify-content: center;
-    margin-bottom: 16px;
-    padding: 0; /* Removed padding so image touches edges if needed */
+    margin-bottom: 8px;
+    min-height: 0; /* Allow shrinking if text is huge */
+    padding: 4px;
   }
 
-  /* Force SVG to scale to container */
+  /* Force SVG to contain itself within the flex box */
   .question-image svg {
     width: auto !important;
     height: auto !important;
     max-width: 100%;
     max-height: 100%;
     display: block;
-    /* Ensure lines remain crisp when scaled up */
-    vector-effect: non-scaling-stroke; 
+    vector-effect: non-scaling-stroke;
   }
 
   .question-text {
+    flex-shrink: 0; /* Don't shrink text if possible */
     font-size: 1.1rem;
     font-weight: 500;
     color: #1e293b;
     transition: opacity 0.3s ease;
     width: 100%;
+    padding-bottom: 4px;
   }
 
   .card-content.revealed-mode .question-text {
@@ -719,27 +723,28 @@ const boardStyles = `
 
   .answer-section {
     width: 100%;
-    margin-top: 16px;
+    margin-top: 8px;
     padding-top: 0;
     border-top: 1px dashed #e2e8f0;
     max-height: 0;
     overflow: hidden;
     opacity: 0;
-    transition: max-height 0.3s ease, opacity 0.3s ease, padding-top 0.3s ease;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
   }
 
   .answer-section.visible {
-    max-height: 200px;
+    max-height: 100px;
     opacity: 1;
-    padding-top: 16px;
+    padding-top: 8px;
   }
 
   .answer-text {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: #16a34a;
     background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    padding: 12px 20px;
+    padding: 8px 16px;
     border-radius: 10px;
     display: inline-block;
     border: 1px solid #bbf7d0;
@@ -747,12 +752,14 @@ const boardStyles = `
 
   /* Card Footer */
   .card-footer {
-    padding: 12px 16px;
+    padding: 8px 12px;
     border-top: 1px solid #f1f5f9;
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: #fafafa;
+    flex-shrink: 0;
+    min-height: 48px;
   }
 
   .perf-buttons {
@@ -891,10 +898,22 @@ const boardStyles = `
     box-shadow: 0 6px 16px rgba(13, 148, 136, 0.35);
   }
 
-  /* Responsive */
+  /* Responsive Mobile View: Disable the 'fit to screen' feature so they can scroll */
   @media (max-width: 768px) {
     .dna-board {
       padding: 16px;
+      height: auto; /* Allow scrolling on mobile */
+      overflow: auto;
+    }
+
+    .questions-grid {
+      display: flex;
+      flex-direction: column;
+      height: auto;
+    }
+
+    .question-card {
+      min-height: 300px;
     }
 
     .board-header {
@@ -913,10 +932,6 @@ const boardStyles = `
 
     .board-header h1 {
       font-size: 1.2rem;
-    }
-
-    .question-card {
-      min-height: 260px;
     }
   }
 `;
