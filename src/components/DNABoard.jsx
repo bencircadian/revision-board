@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../supabase';
 import { Icon } from './Icons';
+import Latex from 'react-latex-next';
 
 // Math Display Component
 const MathDisplay = ({ text, fontSize }) => {
