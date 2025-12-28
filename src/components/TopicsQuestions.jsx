@@ -1,19 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../supabase';
 import { Icon } from './Icons';
-
-// --- CONSTANTS & HELPERS ---
-
-const DIFFICULTIES = {
-  '•': { label: '•', level: 1, className: 'level-1' },
-  '••': { label: '••', level: 2, className: 'level-2' },
-  '•••': { label: '•••', level: 3, className: 'level-3' },
-  '1': { label: '•', level: 1, className: 'level-1' },
-  '2': { label: '••', level: 2, className: 'level-2' },
-  '3': { label: '•••', level: 3, className: 'level-3' },
-};
-
-const getDifficultyInfo = (diff) => DIFFICULTIES[diff] || DIFFICULTIES['••'];
+import { getDifficultyInfo, DIFFICULTY_OPTIONS } from '../utils/difficulty';
 
 const runGenerator = (code) => {
   try { 
@@ -344,10 +332,10 @@ export default function TopicsQuestions({ onNavigate }) {
               <div className="form-group half">
                 <label>Difficulty</label>
                 <select value={formData.difficulty} onChange={e => setFormData({...formData, difficulty: e.target.value})}>
-                  <option value="•">Level 1 (•)</option>
-                  <option value="••">Level 2 (••)</option>
-                  <option value="•••">Level 3 (•••)</option>
-                </select>
+  {DIFFICULTY_OPTIONS.map(opt => (
+    <option key={opt.value} value={opt.value}>{opt.label}</option>
+  ))}
+</select>
               </div>
             </div>
 
