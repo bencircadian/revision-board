@@ -360,13 +360,16 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                         <div className="preview-unavailable">Preview not available</div>
                       ) : (
                         <>
-                          {/* UPDATED: Hover Tooltip */}
-                          <div className="preview-question tooltip-container">
-                            <strong>Q:</strong> <RenderTex text={preview?.q || 'Loading...'} />
+                          {/* UPDATED: Wrapper structure to allow tooltip to escape truncation */}
+                          <div className="tooltip-container">
+                            <div className="preview-question">
+                              <strong>Q:</strong> <RenderTex text={preview?.q || 'Loading...'} />
+                            </div>
                             <div className="tooltip-popout">
                                 <RenderTex text={preview?.q || ''} />
                             </div>
                           </div>
+                          
                           <div className="preview-answer"><strong>A:</strong> <RenderTex text={preview?.a || '...'} /></div>
                         </>
                       )}
@@ -468,8 +471,18 @@ const createDNAStyles = `
   .preview-image-wrapper { height: 80px; display: flex; align-items: center; justify-content: flex-start; margin-bottom: 8px; overflow: hidden; }
   .preview-image-wrapper svg, .preview-image-wrapper img { max-height: 100%; width: auto; max-width: 100%; }
   
-  /* TOOLTIP STYLES */
-  .tooltip-container { position: relative; cursor: help; }
+  /* UPDATED TOOLTIP STYLES */
+  .tooltip-container { position: relative; cursor: help; margin-bottom: 4px; }
+  
+  .preview-question { 
+    font-size: 0.85rem; 
+    color: #334155; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    margin: 0; /* Remove margin from here */
+  }
+
   .tooltip-popout {
     visibility: hidden;
     width: 300px;
@@ -479,26 +492,24 @@ const createDNAStyles = `
     border-radius: 8px;
     padding: 12px;
     position: absolute;
-    z-index: 9999;
+    z-index: 10000;
     top: 100%;
     left: 0;
-    margin-top: 8px;
+    margin-top: 4px;
     opacity: 0;
     transition: opacity 0.2s;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     font-size: 0.9rem;
     line-height: 1.4;
-    white-space: normal; /* Allow wrapping in tooltip */
+    white-space: normal;
     border: 1px solid #334155;
   }
   
-  /* Show tooltip on hover */
   .tooltip-container:hover .tooltip-popout {
     visibility: visible;
     opacity: 1;
   }
 
-  .preview-question { font-size: 0.85rem; color: #334155; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .preview-answer { font-size: 0.8rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .preview-unavailable { font-size: 0.85rem; color: #94a3b8; font-style: italic; }
   .no-match-warning { font-size: 0.7rem; color: #d97706; margin-top: 4px; }
