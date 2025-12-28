@@ -526,8 +526,8 @@ const boardStyles = `
     background: rgba(255, 255, 255, 0.5); 
     
     /* OPTIONAL BUT RECOMMENDED: Blurs the text underneath so it looks cleaner */
-    backdrop-filter: blur(4px); 
-    -webkit-backdrop-filter: blur(4px); /* Safari support */
+    backdrop-filter: blur(2px); 
+    -webkit-backdrop-filter: blur(2px); /* Safari support */
 
     border-top: 1px solid rgba(226, 232, 240, 0.6); /* Made border slightly transparent too */
     padding: 12px;
