@@ -1,21 +1,17 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Icon } from './Icons';
-import katex from 'katex'; // Import core Katex
-import 'katex/dist/katex.min.css'; // Import CSS
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
 
-// SAFE MATH RENDERER (No external library dependency)
+// SAFE MATH RENDERER
 const RenderTex = ({ text }) => {
   if (!text) return null;
-  // Split by $ to find math segments
   const parts = text.split('$');
   return (
     <span>
       {parts.map((part, index) => {
-        // Even index = regular text
         if (index % 2 === 0) return <span key={index}>{part}</span>;
-        
-        // Odd index = math. Render it safely.
         try {
           const html = katex.renderToString(part, {
             throwOnError: false,
@@ -164,7 +160,6 @@ export default function CreateDNA({ onGenerate, onCancel }) {
       const preview = previews[selection.id];
       
       if (preview?.questionData) {
-        // Re-run generator to ensure fresh randomness but keep consistency if needed
         const generated = runGenerator(preview.questionData.generator_code);
         generatedCards.push({
           ...preview.questionData,
@@ -176,7 +171,6 @@ export default function CreateDNA({ onGenerate, onCancel }) {
           isReview: false
         });
       } else {
-        // Fallback logic
         const allQuestions = skillQuestions[selection.skill] || [];
         const matchingQuestions = allQuestions.filter(q => 
           normalizeDifficulty(q.difficulty) === selection.difficulty
@@ -355,7 +349,6 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                   
                   <div className={`preview-panel ${noMatchWarning ? 'no-match' : ''}`}>
                     <div className="preview-content">
-                      {/* Image Wrapper with CSS fix */}
                       {preview?.image && (
                         <div 
                           className="preview-image-wrapper"
@@ -367,7 +360,13 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                         <div className="preview-unavailable">Preview not available</div>
                       ) : (
                         <>
-                          <div className="preview-question"><strong>Q:</strong> <RenderTex text={preview?.q || 'Loading...'} /></div>
+                          {/* UPDATED: Hover Tooltip */}
+                          <div className="preview-question tooltip-container">
+                            <strong>Q:</strong> <RenderTex text={preview?.q || 'Loading...'} />
+                            <div className="tooltip-popout">
+                                <RenderTex text={preview?.q || ''} />
+                            </div>
+                          </div>
                           <div className="preview-answer"><strong>A:</strong> <RenderTex text={preview?.a || '...'} /></div>
                         </>
                       )}
@@ -449,11 +448,9 @@ const createDNAStyles = `
   .row-num { width: 28px; height: 28px; background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
   .topic-select { width: 260px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; background: white; }
   
-  /* Difficulty Label Styling */
   .diff-container { display: flex; flex-direction: column; align-items: center; margin: 0 2px; }
   .diff-label { font-size: 0.55rem; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 3px; text-transform: uppercase; line-height: 1; }
   .diff-buttons { display: flex; gap: 4px; }
-  
   .diff-btn { width: 32px; height: 32px; border: 2px solid #e2e8f0; border-radius: 6px; background: white; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; padding: 0; color: #94a3b8; }
   .diff-btn:hover { border-color: #99f6e4; background: #f0fdfa; color: #0d9488; }
   .diff-btn.active { background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); color: white; border-color: transparent; }
@@ -464,31 +461,48 @@ const createDNAStyles = `
   .btn-remove { width: 32px; height: 32px; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
   .btn-remove:hover { background: #fee2e2; }
   
-  .preview-panel { flex: 1; display: flex; gap: 8px; align-items: center; background: #f8fafc; border-radius: 8px; padding: 10px 14px; border: 1px solid #f1f5f9; min-width: 0; }
+  .preview-panel { flex: 1; display: flex; gap: 8px; align-items: center; background: #f8fafc; border-radius: 8px; padding: 10px 14px; border: 1px solid #f1f5f9; min-width: 0; position: relative; }
   .preview-panel.no-match { background: #fffbeb; border-color: #fde68a; }
   .preview-content { flex: 1; min-width: 0; }
   
-  /* FIXED IMAGE STYLES */
-  .preview-image-wrapper { 
-    height: 80px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: flex-start;
-    margin-bottom: 8px; 
-    overflow: hidden; 
-  }
-  .preview-image-wrapper svg, .preview-image-wrapper img { 
-    max-height: 100%; 
-    width: auto; 
-    max-width: 100%; 
+  .preview-image-wrapper { height: 80px; display: flex; align-items: center; justify-content: flex-start; margin-bottom: 8px; overflow: hidden; }
+  .preview-image-wrapper svg, .preview-image-wrapper img { max-height: 100%; width: auto; max-width: 100%; }
+  
+  /* TOOLTIP STYLES */
+  .tooltip-container { position: relative; cursor: help; }
+  .tooltip-popout {
+    visibility: hidden;
+    width: 300px;
+    background-color: #1e293b;
+    color: #fff;
+    text-align: left;
+    border-radius: 8px;
+    padding: 12px;
+    position: absolute;
+    z-index: 9999;
+    top: 100%;
+    left: 0;
+    margin-top: 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    white-space: normal; /* Allow wrapping in tooltip */
+    border: 1px solid #334155;
   }
   
+  /* Show tooltip on hover */
+  .tooltip-container:hover .tooltip-popout {
+    visibility: visible;
+    opacity: 1;
+  }
+
   .preview-question { font-size: 0.85rem; color: #334155; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .preview-answer { font-size: 0.8rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .preview-unavailable { font-size: 0.85rem; color: #94a3b8; font-style: italic; }
   .no-match-warning { font-size: 0.7rem; color: #d97706; margin-top: 4px; }
   
-  /* MATH STYLES */
   .math-text { font-family: 'KaTeX_Main', serif; color: #0d9488; font-size: 1.1em; }
   
   .btn-refresh { width: 28px; height: 28px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; color: #64748b; }
