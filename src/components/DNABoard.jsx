@@ -515,24 +515,30 @@ const boardStyles = `
   }
   /* When revealed, we do NOT hide text, we just overlay the answer */
   
-  /* Answer Overlay - ABSOLUTE POSITIONING */
+/* Updated Answer Overlay */
   .answer-section { 
     position: absolute;
     bottom: 0;
     left: 0; 
     right: 0;
-    background: rgba(255, 255, 255, 0.98);
-    border-top: 1px solid #e2e8f0;
+    
+    /* CHANGE 1: 50% Transparency */
+    background: rgba(255, 255, 255, 0.5); 
+    
+    /* OPTIONAL BUT RECOMMENDED: Blurs the text underneath so it looks cleaner */
+    backdrop-filter: blur(4px); 
+    -webkit-backdrop-filter: blur(4px); /* Safari support */
+
+    border-top: 1px solid rgba(226, 232, 240, 0.6); /* Made border slightly transparent too */
     padding: 12px;
     
-    transform: translateY(110%); /* Start hidden below the fold */
+    transform: translateY(110%);
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 10;
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
   }
   
   .answer-section.visible { 
