@@ -2,19 +2,20 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Icon } from './Icons';
 import ErrorMessage from './ErrorMessage';
-const [error, setError] = useState(null);
 
 export default function Dashboard({ onNavigate }) {
   const [classes, setClasses] = useState([]);
   const [recentSessions, setRecentSessions] = useState([]);
   const [stats, setStats] = useState({ totalQuestions: 0, avgScore: 0, streakDays: 0 });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
   async function fetchDashboardData() {
+    setError(null);
     try {
       // Get user first
       const { data: { user } } = await supabase.auth.getUser();
@@ -88,6 +89,7 @@ export default function Dashboard({ onNavigate }) {
       });
     } catch (err) {
       console.error('Dashboard fetch error:', err);
+      setError('Could not load dashboard data. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -160,6 +162,13 @@ export default function Dashboard({ onNavigate }) {
           </button>
         </div>
       </header>
+
+      {error && (
+  <ErrorMessage 
+    message={error} 
+    onRetry={fetchDashboardData} 
+  />
+)}
 
       {/* Stats Cards */}
       <section className="stats-grid">
