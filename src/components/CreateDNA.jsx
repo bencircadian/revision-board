@@ -3,6 +3,7 @@ import { supabase } from '../supabase';
 import { Icon } from './Icons';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import { normalizeToLevel, DIFFICULTY_OPTIONS } from '../utils/difficulty';
 
 // SAFE MATH RENDERER
 const RenderTex = ({ text }) => {
@@ -65,18 +66,10 @@ export default function CreateDNA({ onGenerate, onCancel }) {
     fetchSkills();
   }, []);
 
-  const normalizeDifficulty = (diff) => {
-    if (!diff) return '••';
-    if (diff === '•' || diff === '1' || diff.toLowerCase() === 'easy') return '•';
-    if (diff === '••' || diff === '2' || diff.toLowerCase() === 'medium') return '••';
-    if (diff === '•••' || diff === '3' || diff.toLowerCase() === 'hard') return '•••';
-    return '••';
-  };
-
   const generatePreview = (rowId, skill, difficulty, questionsCache = skillQuestions) => {
     const allQuestions = questionsCache[skill] || [];
     const matchingQuestions = allQuestions.filter(q => 
-      normalizeDifficulty(q.difficulty) === difficulty
+      normalizeToLevel(q.difficulty) === normalizeToLevel(difficulty)
     );
     const questions = matchingQuestions.length > 0 ? matchingQuestions : allQuestions;
     
@@ -173,7 +166,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
       } else {
         const allQuestions = skillQuestions[selection.skill] || [];
         const matchingQuestions = allQuestions.filter(q => 
-          normalizeDifficulty(q.difficulty) === selection.difficulty
+          normalizeToLevel(q.difficulty) === normalizeToLevel(selection.difficulty)
         );
         const questions = matchingQuestions.length > 0 ? matchingQuestions : allQuestions;
         
@@ -307,30 +300,17 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                     <div className="diff-container">
                       <span className="diff-label">DIFFICULTY</span>
                       <div className="diff-buttons">
-                        <button
-                          type="button"
-                          className={`diff-btn ${row.difficulty === '•' ? 'active' : ''}`}
-                          onClick={() => updateRow(row.id, 'difficulty', '•')}
-                          title="Level 1"
-                        >
-                          <Icon name="level1" size={20} />
-                        </button>
-                        <button
-                          type="button"
-                          className={`diff-btn ${row.difficulty === '••' ? 'active' : ''}`}
-                          onClick={() => updateRow(row.id, 'difficulty', '••')}
-                          title="Level 2"
-                        >
-                          <Icon name="level2" size={20} />
-                        </button>
-                        <button
-                          type="button"
-                          className={`diff-btn ${row.difficulty === '•••' ? 'active' : ''}`}
-                          onClick={() => updateRow(row.id, 'difficulty', '•••')}
-                          title="Level 3"
-                        >
-                          <Icon name="level3" size={20} />
-                        </button>
+                        {DIFFICULTY_OPTIONS.map(opt => (
+  <button
+    key={opt.level}
+    type="button"
+    className={`diff-btn ${normalizeToLevel(row.difficulty) === opt.level ? 'active' : ''}`}
+    onClick={() => updateRow(row.id, 'difficulty', opt.value)}
+    title={opt.label}
+  >
+    <Icon name={`level${opt.level}`} size={20} />
+  </button>
+))}
                       </div>
                     </div>
 
