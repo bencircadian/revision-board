@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabase';
 import { Icon } from './Icons';
+import ErrorMessage from './ErrorMessage';
 
 export default function ClassSelector({ onSelectClass, onCreateNew }) {
   const [classes, setClasses] = useState([]);
@@ -79,12 +80,13 @@ export default function ClassSelector({ onSelectClass, onCreateNew }) {
         </button>
       </header>
 
-      {error && (
-        <div className="error-banner">
-          <span><Icon name="alert" size={18} /> Could not load classes. </span>
-          <button onClick={fetchClasses}>Retry</button>
-        </div>
-      )}
+{error && (
+  <ErrorMessage 
+    message="Could not load your classes" 
+    details={error}
+    onRetry={fetchClasses} 
+  />
+)}
 
       <div className="class-grid">
         {/* Create New Button */}
