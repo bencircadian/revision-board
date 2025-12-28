@@ -1,4 +1,5 @@
 import { useEffect, useState, Suspense, lazy } from 'react'
+import { supabase } from './supabase' // <--- Added Supabase import
 import Sidebar from './components/Sidebar'
 import { Icon } from './components/Icons'
 import './App.css'
@@ -15,12 +16,33 @@ const SharedDNAs = lazy(() => import('./components/SharedDNAs'));
 const Feedback = lazy(() => import('./components/Feedback'));
 
 function App() {
+  // --- Auth State ---
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // --- Layout/Routing State ---
   const [currentView, setCurrentView] = useState('dashboard');
   const [currentClass, setCurrentClass] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // 1. Check Auth Session on Load
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // 2. Handle Window Resize (Existing logic)
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
@@ -51,6 +73,23 @@ function App() {
     }
   };
 
+  // --- Render Conditionals ---
+
+  // A. Loading Screen (while checking Supabase)
+  if (authLoading) {
+    return (
+      <div className="loading-container" style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  // B. Not Logged In -> Show Landing Page
+  if (!session) {
+    return <LandingPage />;
+  }
+
+  // C. Logged In -> Show Main App Layout
   return (
     <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${isMobile ? 'mobile' : ''}`}>
       {isMobile && (
@@ -74,6 +113,7 @@ function App() {
         isMobile={isMobile}
         mobileMenuOpen={mobileMenuOpen}
         onCloseMobile={() => setMobileMenuOpen(false)}
+        onLogout={() => supabase.auth.signOut()} // <--- Connected Logout
       />
 
       {isMobile && mobileMenuOpen && (
@@ -93,4 +133,4 @@ function App() {
   );
 }
 
-export default App
+export default App;
