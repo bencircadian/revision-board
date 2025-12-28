@@ -5,6 +5,7 @@ import { Icon } from './components/Icons'
 import './App.css'
 import LandingPage from './components/LandingPage';
 
+
 // Lazy load components to improve initial load time
 const Dashboard = lazy(() => import('./components/Dashboard'));
 const DNABoard = lazy(() => import('./components/DNABoard'));
@@ -14,6 +15,7 @@ const CreateClass = lazy(() => import('./components/CreateClass'));
 const TopicsQuestions = lazy(() => import('./components/TopicsQuestions'));
 const SharedDNAs = lazy(() => import('./components/SharedDNAs'));
 const Feedback = lazy(() => import('./components/Feedback'));
+const AccountSettings = lazy(() => import('./components/AccountSettings'));
 
 function App() {
   // --- Auth State ---
@@ -59,7 +61,7 @@ function App() {
     if (isMobile) setMobileMenuOpen(false);
   };
 
-  const renderContent = () => {
+const renderContent = () => {
     switch (currentView) {
       case 'dashboard': return <Dashboard onNavigate={navigate} />;
       case 'dna-board': return <DNABoard currentClass={currentClass} onNavigate={navigate} />;
@@ -69,6 +71,10 @@ function App() {
       case 'topics': return <TopicsQuestions onNavigate={navigate} />;
       case 'shared': return <SharedDNAs onNavigate={navigate} />;
       case 'feedback': return <Feedback onNavigate={navigate} />;
+      
+      // NEW: Add this case for the account page
+      case 'account': return <AccountSettings />;
+      
       default: return <Dashboard onNavigate={navigate} />;
     }
   };
