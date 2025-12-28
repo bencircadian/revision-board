@@ -10,7 +10,7 @@ export default function Sidebar({
   isMobile,
   mobileMenuOpen,
   onCloseMobile,
-  onLogout // <--- Added this prop
+  onLogout 
 }) {
   const [user, setUser] = useState(null);
 
@@ -20,6 +20,13 @@ export default function Sidebar({
       setUser(user);
     };
     getUser();
+    
+    // Listen for auth changes (like profile updates) to refresh the sidebar info immediately
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) setUser(session.user);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const navItems = [
@@ -77,7 +84,7 @@ export default function Sidebar({
       </nav>
 
       <div className="sidebar-footer">
-        {/* NEW: Logout Button */}
+        {/* Logout Button */}
         <button className="logout-btn" onClick={onLogout} title="Sign Out">
           <span className="nav-icon-container">
             <Icon name="logout" size={20} />
@@ -85,17 +92,30 @@ export default function Sidebar({
           {!collapsed && <span className="nav-label">Sign Out</span>}
         </button>
 
-        <div className="user-section">
+        {/* CLICKABLE USER SECTION */}
+        <div 
+          className="user-section" 
+          onClick={() => onNavigate('account')} 
+          title="Edit Profile"
+        >
           <div className="user-avatar">
-            {user?.email?.charAt(0).toUpperCase() || 'T'}
+            {/* Show Initial of Full Name if exists, otherwise Email */}
+            {(user?.user_metadata?.full_name || user?.email || 'U').charAt(0).toUpperCase()}
           </div>
           {!collapsed && (
             <div className="user-info">
-              <span className="user-name">{user?.email?.split('@')[0] || 'Teacher'}</span>
-              <span className="user-role">Educator</span>
+              {/* Show Real Full Name */}
+              <span className="user-name">
+                {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
+              </span>
+              {/* Show Real Role */}
+              <span className="user-role">
+                {user?.user_metadata?.role || 'Educator'}
+              </span>
             </div>
           )}
         </div>
+        
       </div>
 
       <style>{`
@@ -242,7 +262,6 @@ export default function Sidebar({
           overflow: hidden; 
         }
 
-        /* LOGOUT BUTTON STYLES */
         .logout-btn {
           display: flex;
           align-items: center;
@@ -263,7 +282,23 @@ export default function Sidebar({
           color: #fca5a5;
         }
 
-        .user-section { display: flex; align-items: center; gap: 12px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 12px; white-space: nowrap; }
+        /* Updated User Section Styles */
+        .user-section { 
+          display: flex; 
+          align-items: center; 
+          gap: 12px; 
+          padding: 8px; 
+          background: rgba(255,255,255,0.03); 
+          border-radius: 12px; 
+          white-space: nowrap;
+          cursor: pointer; /* Makes it look clickable */
+          transition: background 0.2s;
+        }
+        
+        .user-section:hover {
+          background: rgba(255,255,255,0.1); /* Hover effect */
+        }
+
         .user-avatar { width: 32px; height: 32px; background: var(--accent); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
         .user-name { font-weight: 600; font-size: 0.8rem; color: white; display: block; }
         .user-role { font-size: 0.65rem; color: rgba(255,255,255,0.4); display: block; }
