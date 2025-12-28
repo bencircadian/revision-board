@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Icon } from './Icons';
+import ErrorMessage from './ErrorMessage';
+const [error, setError] = useState(null);
 
 export default function Dashboard({ onNavigate }) {
   const [classes, setClasses] = useState([]);
