@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Icon } from './Icons';
-import 'katex/dist/katex.min.css'; // Import Katex CSS
-import { InlineMath } from 'react-katex'; // Import Math Component
+import katex from 'katex'; // Import core Katex
+import 'katex/dist/katex.min.css'; // Import CSS
 
-// Helper Component to parse text with $math$
+// SAFE MATH RENDERER (No external library dependency)
 const RenderTex = ({ text }) => {
   if (!text) return null;
   // Split by $ to find math segments
@@ -12,9 +12,25 @@ const RenderTex = ({ text }) => {
   return (
     <span>
       {parts.map((part, index) => {
-        // Even index = regular text, Odd index = math
+        // Even index = regular text
         if (index % 2 === 0) return <span key={index}>{part}</span>;
-        return <span key={index} className="math-text"><InlineMath math={part} /></span>;
+        
+        // Odd index = math. Render it safely.
+        try {
+          const html = katex.renderToString(part, {
+            throwOnError: false,
+            displayMode: false
+          });
+          return (
+            <span 
+              key={index} 
+              className="math-text"
+              dangerouslySetInnerHTML={{ __html: html }} 
+            />
+          );
+        } catch (e) {
+          return <span key={index} style={{color:'red'}}>{part}</span>;
+        }
       })}
     </span>
   );
@@ -53,7 +69,6 @@ export default function CreateDNA({ onGenerate, onCancel }) {
     fetchSkills();
   }, []);
 
-  // Helper to normalize difficulty values from database
   const normalizeDifficulty = (diff) => {
     if (!diff) return '••';
     if (diff === '•' || diff === '1' || diff.toLowerCase() === 'easy') return '•';
@@ -64,13 +79,9 @@ export default function CreateDNA({ onGenerate, onCancel }) {
 
   const generatePreview = (rowId, skill, difficulty, questionsCache = skillQuestions) => {
     const allQuestions = questionsCache[skill] || [];
-    
-    // Filter by difficulty
     const matchingQuestions = allQuestions.filter(q => 
       normalizeDifficulty(q.difficulty) === difficulty
     );
-    
-    // Fall back to all questions if none match the difficulty
     const questions = matchingQuestions.length > 0 ? matchingQuestions : allQuestions;
     
     if (questions.length > 0) {
@@ -137,10 +148,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
 
   const updateRow = (id, field, value) => {
     setSelections(selections.map(s => s.id === id ? { ...s, [field]: value } : s));
-    
-    // Get the current row to access both skill and difficulty
     const currentRow = selections.find(s => s.id === id);
-    
     if (field === 'skill') {
       generatePreview(id, value, currentRow?.difficulty || '••');
     } else if (field === 'difficulty') {
@@ -156,6 +164,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
       const preview = previews[selection.id];
       
       if (preview?.questionData) {
+        // Re-run generator to ensure fresh randomness but keep consistency if needed
         const generated = runGenerator(preview.questionData.generator_code);
         generatedCards.push({
           ...preview.questionData,
@@ -199,7 +208,6 @@ export default function CreateDNA({ onGenerate, onCancel }) {
         }
       }
     }
-    
     setLoading(false);
     onGenerate(generatedCards);
   };
@@ -244,7 +252,6 @@ export default function CreateDNA({ onGenerate, onCancel }) {
           <button className="btn-back" onClick={onCancel}>← Back</button>
         </header>
 
-        {/* 1. Search Box */}
         <div className="topic-search">
           <span className="search-icon"><Icon name="search" size={16} /></span>
           <input
@@ -255,7 +262,6 @@ export default function CreateDNA({ onGenerate, onCancel }) {
           />
         </div>
 
-        {/* 2. Search Results / Quick Add */}
         <div className="quick-topics">
           <span className="label">
             {searchTerm ? `Found ${filteredSkills.length} skills:` : 'Quick add:'}
@@ -284,7 +290,6 @@ export default function CreateDNA({ onGenerate, onCancel }) {
           </div>
         </div>
 
-        {/* 3. Current Questions List */}
         <div className="selection-container">
           <div className="selection-list">
             {selections.map((row, index) => {
@@ -305,7 +310,6 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                       ))}
                     </select>
                     
-                    {/* DIFFICULTY SECTION */}
                     <div className="diff-container">
                       <span className="diff-label">DIFFICULTY</span>
                       <div className="diff-buttons">
@@ -351,7 +355,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                   
                   <div className={`preview-panel ${noMatchWarning ? 'no-match' : ''}`}>
                     <div className="preview-content">
-                      {/* FIXED: Image Container */}
+                      {/* Image Wrapper with CSS fix */}
                       {preview?.image && (
                         <div 
                           className="preview-image-wrapper"
@@ -363,7 +367,6 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                         <div className="preview-unavailable">Preview not available</div>
                       ) : (
                         <>
-                          {/* FIXED: Use RenderTex for Math */}
                           <div className="preview-question"><strong>Q:</strong> <RenderTex text={preview?.q || 'Loading...'} /></div>
                           <div className="preview-answer"><strong>A:</strong> <RenderTex text={preview?.a || '...'} /></div>
                         </>
@@ -465,7 +468,7 @@ const createDNAStyles = `
   .preview-panel.no-match { background: #fffbeb; border-color: #fde68a; }
   .preview-content { flex: 1; min-width: 0; }
   
-  /* UPDATED IMAGE STYLES - Fixes the clipping */
+  /* FIXED IMAGE STYLES */
   .preview-image-wrapper { 
     height: 80px; 
     display: flex; 
@@ -486,7 +489,7 @@ const createDNAStyles = `
   .no-match-warning { font-size: 0.7rem; color: #d97706; margin-top: 4px; }
   
   /* MATH STYLES */
-  .math-text { font-family: 'KaTeX_Main', serif; color: #0d9488; }
+  .math-text { font-family: 'KaTeX_Main', serif; color: #0d9488; font-size: 1.1em; }
   
   .btn-refresh { width: 28px; height: 28px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; color: #64748b; }
   .btn-refresh:hover { background: #f0fdfa; border-color: #99f6e4; color: #0d9488; }
