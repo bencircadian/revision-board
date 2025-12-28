@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Icon } from './Icons';
+import ErrorMessage from './ErrorMessage';
 
 export default function CreateClass({ onSave, onCancel }) {
   const [className, setClassName] = useState('');
@@ -10,18 +11,34 @@ export default function CreateClass({ onSave, onCancel }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchTopics() {
-      const { data } = await supabase.from('questions').select('topic');
-      if (data) {
-        const unique = [...new Set(data.map(q => q.topic))].sort();
-        setAllTopics(unique);
-      }
-      setLoading(false);
-    }
     fetchTopics();
   }, []);
+
+  async function fetchTopics() {
+    setLoading(true);
+    setError(null);
+    
+    const { data, error: fetchError } = await supabase.from('questions').select('topic');
+    
+    if (fetchError) {
+      setError('Could not load topics. Please check your connection.');
+      setLoading(false);
+      return;
+    }
+    
+    if (data) {
+      const unique = [...new Set(data.map(q => q.topic))].sort();
+      setAllTopics(unique);
+      
+      if (unique.length === 0) {
+        setError('No topics found. Add some questions first.');
+      }
+    }
+    setLoading(false);
+  }
 
   const filteredTopics = allTopics.filter(t =>
     t.toLowerCase().includes(searchTerm.toLowerCase())
@@ -42,13 +59,19 @@ export default function CreateClass({ onSave, onCancel }) {
   };
 
   const handleSave = async () => {
-    if (!className.trim()) return alert("Please enter a class name");
+    // Validation
+    if (!className.trim()) {
+      setError('Please enter a class name');
+      return;
+    }
 
     setSaving(true);
+    setError(null);
+    
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user ? user.id : '00000000-0000-0000-0000-000000000000';
 
-    const { error } = await supabase.from('classes').insert([{
+    const { error: saveError } = await supabase.from('classes').insert([{
       name: className.trim(),
       teacher_id: userId,
       recent_topics: recentTopics,
@@ -56,8 +79,9 @@ export default function CreateClass({ onSave, onCancel }) {
     }]);
 
     setSaving(false);
-    if (error) {
-      alert("Error creating class: " + error.message);
+    
+    if (saveError) {
+      setError('Could not create class: ' + saveError.message);
     } else {
       onSave();
     }
@@ -85,6 +109,14 @@ export default function CreateClass({ onSave, onCancel }) {
           <button className="btn-back" onClick={onCancel}>← Back</button>
         </header>
 
+        {/* Error Message */}
+        {error && (
+          <ErrorMessage 
+            message={error} 
+            onRetry={error.includes('load') ? fetchTopics : null}
+          />
+        )}
+
         {/* Class Name */}
         <div className="form-section">
           <label>Class Name *</label>
@@ -92,7 +124,10 @@ export default function CreateClass({ onSave, onCancel }) {
             type="text"
             placeholder="e.g. Year 10 - Set 2"
             value={className}
-            onChange={e => setClassName(e.target.value)}
+            onChange={e => {
+              setClassName(e.target.value);
+              if (error === 'Please enter a class name') setError(null);
+            }}
             className="name-input"
           />
         </div>
