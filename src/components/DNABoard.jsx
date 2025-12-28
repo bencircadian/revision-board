@@ -3,6 +3,7 @@ import { supabase } from '../supabase';
 import { Icon } from './Icons';
 import Latex from 'react-latex-next';
 import { getDifficultyVariations } from '../utils/difficulty';
+import ErrorMessage from './ErrorMessage';
 
 const MathDisplay = ({ text, fontSize }) => {
   if (!text || text === '-') return <span>-</span>;
@@ -26,6 +27,7 @@ const MathDisplay = ({ text, fontSize }) => {
 
 export default function DNABoard({ currentClass, onNavigate }) {
   const [cards, setCards] = useState([]);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [ratings, setRatings] = useState({});
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -49,6 +51,8 @@ export default function DNABoard({ currentClass, onNavigate }) {
 
   async function fetchAndInitCards(classObj) {
     setLoading(true);
+    setError(null); // Clear any previous error
+    
     const classId = classObj.name || "Default Class";
     
     let reviewQuestions = [];
@@ -56,7 +60,8 @@ export default function DNABoard({ currentClass, onNavigate }) {
       const { data: dueCards } = await supabase.rpc('get_due_cards', { p_class_id: classId });
       reviewQuestions = dueCards || [];
     } catch (e) {
-      console.log('No spaced repetition function available');
+      // This is okay - the function might not exist yet
+      console.log('Spaced repetition not configured');
     }
 
     const slotsRemaining = 6 - reviewQuestions.length;
@@ -67,7 +72,14 @@ export default function DNABoard({ currentClass, onNavigate }) {
       let query = supabase.from('questions').select('*');
       if (topics.length > 0) query = query.in('topic', topics);
       
-      const { data: dbData } = await query;
+      const { data: dbData, error: fetchError } = await query;
+      
+      if (fetchError) {
+        setError('Could not load questions. Please check your connection and try again.');
+        setLoading(false);
+        return;
+      }
+      
       if (dbData) {
         const shuffled = dbData.sort(() => 0.5 - Math.random());
         newQuestions = shuffled.slice(0, slotsRemaining);
@@ -94,6 +106,11 @@ export default function DNABoard({ currentClass, onNavigate }) {
     const cardsWithKeys = finalBoard.slice(0, 6).sort(() => 0.5 - Math.random()).map((card, idx) => ({
       ...card, slotKey: `slot-${idx}`
     }));
+    
+    // Check if we got any cards
+    if (cardsWithKeys.length === 0) {
+      setError('No questions found for this class. Try adding some topics first.');
+    }
     
     setCards(cardsWithKeys);
     setLoading(false);
@@ -144,13 +161,19 @@ export default function DNABoard({ currentClass, onNavigate }) {
     e.preventDefault(); e.stopPropagation();
     const currentCard = cards[index];
     
-  const targets = getDifficultyVariations(level);
+    const targets = getDifficultyVariations(level);
 
     let query = supabase.from('questions').select('*').in('difficulty', targets);
     if (currentCard.skill_name) query = query.eq('skill_name', currentCard.skill_name);
     else if (currentCard.topic) query = query.eq('topic', currentCard.topic);
 
-    const { data } = await query;
+    const { data, error: fetchError } = await query;
+
+    if (fetchError) {
+      setError('Could not change difficulty. Please try again.');
+      setTimeout(() => setError(null), 4000);
+      return;
+    }
 
     if (data && data.length > 0) {
       const randomQ = data[Math.floor(Math.random() * data.length)];
@@ -167,13 +190,22 @@ export default function DNABoard({ currentClass, onNavigate }) {
       } : c));
       setRatings(prev => { const n = { ...prev }; delete n[index]; return n; });
     } else {
-      alert(`No questions found for Level ${level} in this topic.`);
+      setError(`No Level ${level} questions found for "${currentCard.skill_name || currentCard.topic}". Try a different difficulty.`);
+      // Auto-clear after 4 seconds
+      setTimeout(() => setError(null), 4000);
     }
   };
 
   const swapTopic = async (e, index) => {
     e.preventDefault(); e.stopPropagation();
-    const { data } = await supabase.from('questions').select('*');
+    const { data, error: fetchError } = await supabase.from('questions').select('*');
+    
+    if (fetchError) {
+      setError('Could not swap topic. Please try again.');
+      setTimeout(() => setError(null), 4000);
+      return;
+    }
+    
     if (data?.length > 0) {
       const randomQ = data[Math.floor(Math.random() * data.length)];
       const generated = runGenerator(randomQ.generator_code);
@@ -183,6 +215,9 @@ export default function DNABoard({ currentClass, onNavigate }) {
         revealed: false, fontSize: 0.95, isReview: false
       } : c));
       setRatings(prev => { const n = { ...prev }; delete n[index]; return n; });
+    } else {
+      setError('No questions available to swap. Try adding more topics first.');
+      setTimeout(() => setError(null), 4000);
     }
   };
 
@@ -215,7 +250,15 @@ export default function DNABoard({ currentClass, onNavigate }) {
         review_interval: ratings[index] >= 75 ? 12 : 1
       }))
     };
-    await supabase.from('dna_sessions').insert([sessionData]);
+    
+    const { error: saveError } = await supabase.from('dna_sessions').insert([sessionData]);
+    
+    if (saveError) {
+      setError('Could not save session. Your progress may be lost.');
+      setShowSaveModal(false);
+      return;
+    }
+    
     setShowSaveModal(false);
     onNavigate('dashboard');
   };
@@ -232,7 +275,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
       }))
     };
 
-    const { data, error } = await supabase
+    const { data, error: shareError } = await supabase
       .from('shared_boards')
       .insert([{ config: boardConfig }])
       .select('id')
@@ -242,7 +285,8 @@ export default function DNABoard({ currentClass, onNavigate }) {
       const link = `${window.location.origin}/shared/${data.id}`;
       setShareLink(link);
       setShowShareModal(true);
-    } else {
+    } else if (shareError) {
+      // Fallback to encoded link if database save fails
       const encoded = btoa(JSON.stringify(boardConfig));
       const link = `${window.location.origin}?board=${encoded.slice(0, 50)}...`;
       setShareLink(link);
@@ -281,6 +325,20 @@ export default function DNABoard({ currentClass, onNavigate }) {
           <button className="btn-reset" onClick={() => setRatings({})}>Reset</button>
         </div>
       </header>
+
+      {/* Error message display */}
+      {error && (
+        <ErrorMessage 
+          message={error} 
+          type="warning"
+          onRetry={() => {
+            setError(null);
+            if (cards.length === 0) {
+              fetchAndInitCards(currentClass);
+            }
+          }}
+        />
+      )}
 
       <div className="questions-grid">
         {cards.map((card, index) => (
