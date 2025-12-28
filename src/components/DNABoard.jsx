@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
 import { Icon } from './Icons';
 import Latex from 'react-latex-next';
+import { getDifficultyVariations } from '../utils/difficulty';
 
 const MathDisplay = ({ text, fontSize }) => {
   if (!text || text === '-') return <span>-</span>;
@@ -143,12 +144,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
     e.preventDefault(); e.stopPropagation();
     const currentCard = cards[index];
     
-    const difficultyVariations = {
-      1: ['•', '1', 'Level 1', 'Easy', 'easy'],
-      2: ['••', '2', 'Level 2', 'Medium', 'medium'],
-      3: ['•••', '3', 'Level 3', 'Hard', 'hard']
-    };
-    const targets = difficultyVariations[level] || [];
+  const targets = getDifficultyVariations(level);
 
     let query = supabase.from('questions').select('*').in('difficulty', targets);
     if (currentCard.skill_name) query = query.eq('skill_name', currentCard.skill_name);
