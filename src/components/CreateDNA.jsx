@@ -1,6 +1,24 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Icon } from './Icons';
+import 'katex/dist/katex.min.css'; // Import Katex CSS
+import { InlineMath } from 'react-katex'; // Import Math Component
+
+// Helper Component to parse text with $math$
+const RenderTex = ({ text }) => {
+  if (!text) return null;
+  // Split by $ to find math segments
+  const parts = text.split('$');
+  return (
+    <span>
+      {parts.map((part, index) => {
+        // Even index = regular text, Odd index = math
+        if (index % 2 === 0) return <span key={index}>{part}</span>;
+        return <span key={index} className="math-text"><InlineMath math={part} /></span>;
+      })}
+    </span>
+  );
+};
 
 export default function CreateDNA({ onGenerate, onCancel }) {
   const [availableSkills, setAvailableSkills] = useState([]);
@@ -63,7 +81,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
         [rowId]: { 
           q: generated.q, 
           a: generated.a, 
-          image: generated.image, // Store image in preview
+          image: generated.image, 
           questionData: randomQ,
           hasMatchingDifficulty: matchingQuestions.length > 0
         } 
@@ -124,10 +142,8 @@ export default function CreateDNA({ onGenerate, onCancel }) {
     const currentRow = selections.find(s => s.id === id);
     
     if (field === 'skill') {
-      // Skill changed - regenerate with current difficulty
       generatePreview(id, value, currentRow?.difficulty || '••');
     } else if (field === 'difficulty') {
-      // Difficulty changed - regenerate with current skill
       generatePreview(id, currentRow?.skill, value);
     }
   };
@@ -137,24 +153,21 @@ export default function CreateDNA({ onGenerate, onCancel }) {
     let generatedCards = [];
     
     for (const selection of selections) {
-      // Use the pre-selected question from preview if available
       const preview = previews[selection.id];
       
       if (preview?.questionData) {
-        // Re-run generator to ensure fresh randomness, or use preview data
-        // Let's re-run to ensure 'image' is definitely captured if preview was old
         const generated = runGenerator(preview.questionData.generator_code);
         generatedCards.push({
           ...preview.questionData,
           currentQ: generated.q,
           currentA: generated.a,
-          currentImage: generated.image, // <--- IMPORTANT: Pass image to board
+          currentImage: generated.image, 
           revealed: false,
           fontSize: 1.4,
           isReview: false
         });
       } else {
-        // Fallback: find a matching question
+        // Fallback logic
         const allQuestions = skillQuestions[selection.skill] || [];
         const matchingQuestions = allQuestions.filter(q => 
           normalizeDifficulty(q.difficulty) === selection.difficulty
@@ -168,7 +181,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
             ...randomQ,
             currentQ: generated.q,
             currentA: generated.a,
-            currentImage: generated.image, // <--- IMPORTANT: Pass image to board
+            currentImage: generated.image, 
             revealed: false,
             fontSize: 1.4,
             isReview: false
@@ -199,7 +212,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
       return { 
         q: result.q ?? "Missing question", 
         a: result.a ?? "-",
-        image: result.image // <--- Capture image property here
+        image: result.image 
       };
     } catch (e) { 
       return { q: "Error in question", a: "-" }; 
@@ -292,7 +305,7 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                       ))}
                     </select>
                     
-                    {/* DIFFICULTY SECTION with New Label */}
+                    {/* DIFFICULTY SECTION */}
                     <div className="diff-container">
                       <span className="diff-label">DIFFICULTY</span>
                       <div className="diff-buttons">
@@ -338,10 +351,10 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                   
                   <div className={`preview-panel ${noMatchWarning ? 'no-match' : ''}`}>
                     <div className="preview-content">
-                      {/* Show Image in Preview if available */}
+                      {/* FIXED: Image Container */}
                       {preview?.image && (
                         <div 
-                          style={{marginBottom: '8px', maxHeight: '60px', overflow:'hidden'}} 
+                          className="preview-image-wrapper"
                           dangerouslySetInnerHTML={{ __html: preview.image }} 
                         />
                       )}
@@ -350,8 +363,9 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                         <div className="preview-unavailable">Preview not available</div>
                       ) : (
                         <>
-                          <div className="preview-question"><strong>Q:</strong> {preview?.q || 'Loading...'}</div>
-                          <div className="preview-answer"><strong>A:</strong> {preview?.a || '...'}</div>
+                          {/* FIXED: Use RenderTex for Math */}
+                          <div className="preview-question"><strong>Q:</strong> <RenderTex text={preview?.q || 'Loading...'} /></div>
+                          <div className="preview-answer"><strong>A:</strong> <RenderTex text={preview?.a || '...'} /></div>
                         </>
                       )}
                       {noMatchWarning && (
@@ -450,10 +464,29 @@ const createDNAStyles = `
   .preview-panel { flex: 1; display: flex; gap: 8px; align-items: center; background: #f8fafc; border-radius: 8px; padding: 10px 14px; border: 1px solid #f1f5f9; min-width: 0; }
   .preview-panel.no-match { background: #fffbeb; border-color: #fde68a; }
   .preview-content { flex: 1; min-width: 0; }
+  
+  /* UPDATED IMAGE STYLES - Fixes the clipping */
+  .preview-image-wrapper { 
+    height: 80px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: flex-start;
+    margin-bottom: 8px; 
+    overflow: hidden; 
+  }
+  .preview-image-wrapper svg, .preview-image-wrapper img { 
+    max-height: 100%; 
+    width: auto; 
+    max-width: 100%; 
+  }
+  
   .preview-question { font-size: 0.85rem; color: #334155; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .preview-answer { font-size: 0.8rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .preview-unavailable { font-size: 0.85rem; color: #94a3b8; font-style: italic; }
   .no-match-warning { font-size: 0.7rem; color: #d97706; margin-top: 4px; }
+  
+  /* MATH STYLES */
+  .math-text { font-family: 'KaTeX_Main', serif; color: #0d9488; }
   
   .btn-refresh { width: 28px; height: 28px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; color: #64748b; }
   .btn-refresh:hover { background: #f0fdfa; border-color: #99f6e4; color: #0d9488; }
