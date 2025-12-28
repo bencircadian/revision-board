@@ -59,6 +59,13 @@ export const Icon = ({ name, size = 20, className = "", style = {} }) => {
     level1: <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />,
     level2: <><circle cx="8" cy="12" r="3" fill="currentColor" stroke="none" /><circle cx="16" cy="12" r="3" fill="currentColor" stroke="none" /></>,
     level3: <><circle cx="5" cy="12" r="3" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="3" fill="currentColor" stroke="none" /></>,
+
+    // --- ADDITIONAL ICONS (previously missing) ---
+    logout: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></>,
+    globe: <><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></>,
+    books: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /><path d="M8 7h6" /><path d="M8 11h8" /></>,
+    help: <><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></>,
+    users: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
   };
 
   // Special case for logo which has its own viewBox
