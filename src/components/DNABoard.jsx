@@ -6,7 +6,6 @@ import Latex from 'react-latex-next';
 const MathDisplay = ({ text, fontSize }) => {
   if (!text || text === '-') return <span>-</span>;
 
-  // If it's an SVG image code (from your generator), render it as HTML
   if (text.includes('<svg')) {
     return (
        <div 
@@ -17,7 +16,6 @@ const MathDisplay = ({ text, fontSize }) => {
     );
   }
 
-  // Otherwise, render as Math
   return (
     <div style={{ fontSize: `${fontSize}rem` }} className="math-content">
       <Latex strict>{text}</Latex>
@@ -294,8 +292,12 @@ export default function DNABoard({ currentClass, onNavigate }) {
             <div className="card-header">
               <div className="card-number">{index + 1}</div>
               
-              {/* CHANGED: Uses Skill Name if available, fallback to Topic */}
-              <div className="card-topic">{card.isReview ? "↺ " : ""}{card.skill_name || card.topic}</div>
+              {/* UPDATED: Wrapper for hover effect */}
+              <div className="card-topic">
+                <span className="topic-text">
+                  {card.isReview ? "↺ " : ""}{card.skill_name || card.topic}
+                </span>
+              </div>
               
               <div className="card-actions">
                 {!card.isReview && (
@@ -330,7 +332,6 @@ export default function DNABoard({ currentClass, onNavigate }) {
                 <MathDisplay text={card.currentQ} fontSize={card.fontSize} />
               </div>
               
-              {/* Answer Overlay with Transparency */}
               <div className={`answer-section ${card.revealed ? 'visible' : ''}`}>
                 <div className="answer-text">
                   <MathDisplay text={card.currentA} fontSize={1.3} />
@@ -426,13 +427,13 @@ const boardStyles = `
   .btn-reset { background: #f1f5f9; border: 1px solid #e2e8f0; color: #64748b; }
   .btn-reset:hover { background: #e2e8f0; }
 
-  /* Grid Layout - 2 rows, equal height, no scroll */
+  /* Grid Layout */
   .questions-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(2, minmax(0, 1fr));
     gap: 12px;
-    flex: 1; /* Fill remaining height */
+    flex: 1; 
     min-height: 0;
   }
 
@@ -459,10 +460,52 @@ const boardStyles = `
     background: #fafafa;
     min-height: 40px;
     flex-shrink: 0;
+    position: relative; /* Context for tooltips if needed */
   }
   .card-number { width: 22px; height: 22px; background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%); color: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; flex-shrink: 0; }
-  .card-topic { flex: 1; font-weight: 600; color: #64748b; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .card-actions { display: flex; gap: 4px; align-items: center; }
+  
+  /* UPDATED TOPIC STYLES FOR HOVER REVEAL */
+  .card-topic { 
+    flex: 1; 
+    min-width: 0; /* Allows flex item to shrink properly */
+    position: relative; /* Anchor for the absolute hover child */
+    font-weight: 600; 
+    color: #64748b; 
+    font-size: 0.7rem; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px;
+    /* Removed overflow:hidden from parent so child can escape */
+  }
+
+  /* The actual text container */
+  .topic-text {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    cursor: default;
+  }
+
+  /* HOVER EFFECT: Expands over the buttons */
+  .topic-text:hover {
+    position: absolute;
+    top: -4px; /* Slight adjustment to cover border if needed */
+    left: 0;
+    width: auto;
+    max-width: calc(100% + 120px); /* Limit width but allow overlap */
+    background: #fafafa;
+    z-index: 50; /* Sits on top of buttons */
+    overflow: visible;
+    white-space: normal; /* Allow wrap if text is massive */
+    padding: 4px 8px;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: 1px solid #e2e8f0;
+    line-height: 1.2;
+  }
+
+  .card-actions { display: flex; gap: 4px; align-items: center; z-index: 1; }
   
   .diff-controls, .zoom-controls { display: flex; gap: 1px; background: #f1f5f9; padding: 1px 3px; border-radius: 4px; }
   .diff-dot, .zoom-btn { background: transparent; border: none; cursor: pointer; color: #94a3b8; padding: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
@@ -481,10 +524,9 @@ const boardStyles = `
     text-align: center;
     overflow: hidden;
     min-height: 0;
-    position: relative; /* Anchor for absolute answer */
+    position: relative; 
   }
 
-  /* Image - Takes Priority with min-height safety */
   .question-image {
     flex: 1; 
     width: 100%;
@@ -504,7 +546,6 @@ const boardStyles = `
     vector-effect: non-scaling-stroke;
   }
 
-  /* Text - Tight layout */
   .question-text {
     flex-shrink: 0;
     font-size: 1.1rem;
@@ -516,26 +557,19 @@ const boardStyles = `
     line-height: 1.3; 
   }
   
-  /* Answer Overlay - ABSOLUTE POSITIONING with TRANSPARENCY */
+  /* Answer Overlay */
   .answer-section { 
     position: absolute;
     bottom: 0;
     left: 0; 
     right: 0;
-    
-    /* 50% opacity white background */
     background: rgba(255, 255, 255, 0.5);
-    
-    /* Blur effect for readability */
-    backdrop-filter: blur(1.5px);
-    -webkit-backdrop-filter: blur(1.5px);
-    
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     border-top: 1px solid rgba(226, 232, 240, 0.6);
     padding: 12px;
-    
     transform: translateY(110%);
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    
     display: flex;
     align-items: center;
     justify-content: center;
@@ -558,7 +592,6 @@ const boardStyles = `
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   }
 
-  /* Compact Footer */
   .card-footer { 
     padding: 6px 10px; 
     border-top: 1px solid #f1f5f9; 
@@ -581,7 +614,6 @@ const boardStyles = `
   .reveal-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid #e2e8f0; font-weight: 600; font-size: 0.75rem; cursor: pointer; background: white; color: #0d9488; transition: all 0.15s ease; }
   .reveal-btn:hover { background: #f0fdfa; border-color: #99f6e4; }
 
-  /* Modals - Keep existing style */
   .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; }
   .modal-box { background: white; padding: 32px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; max-width: 420px; width: 90%; }
   .modal-box h3 { margin: 0 0 12px 0; font-size: 1.4rem; color: #1e293b; }
