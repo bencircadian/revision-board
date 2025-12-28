@@ -2,6 +2,7 @@ import { useEffect, useState, Suspense, lazy } from 'react'
 import Sidebar from './components/Sidebar'
 import { Icon } from './components/Icons'
 import './App.css'
+import LandingPage from './components/LandingPage';
 
 // Lazy load components to improve initial load time
 const Dashboard = lazy(() => import('./components/Dashboard'));
