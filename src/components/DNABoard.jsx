@@ -293,7 +293,10 @@ export default function DNABoard({ currentClass, onNavigate }) {
           <div key={card.slotKey} className="question-card">
             <div className="card-header">
               <div className="card-number">{index + 1}</div>
-              <div className="card-topic">{card.isReview ? "↺ " : ""}{card.topic}</div>
+              
+              {/* CHANGED: Uses Skill Name if available, fallback to Topic */}
+              <div className="card-topic">{card.isReview ? "↺ " : ""}{card.skill_name || card.topic}</div>
+              
               <div className="card-actions">
                 {!card.isReview && (
                   <div className="diff-controls">
@@ -327,7 +330,7 @@ export default function DNABoard({ currentClass, onNavigate }) {
                 <MathDisplay text={card.currentQ} fontSize={card.fontSize} />
               </div>
               
-              {/* Answer Overlay */}
+              {/* Answer Overlay with Transparency */}
               <div className={`answer-section ${card.revealed ? 'visible' : ''}`}>
                 <div className="answer-text">
                   <MathDisplay text={card.currentA} fontSize={1.3} />
@@ -485,9 +488,8 @@ const boardStyles = `
   .question-image {
     flex: 1; 
     width: 100%;
-    /* Add padding to prevent SVG clipping on edges */
     padding: 0 16px; 
-    max-width: 95%; /* Ensure it pulls away from the edges */
+    max-width: 95%; 
     min-height: 100px;
     display: flex;
     align-items: center;
@@ -510,26 +512,25 @@ const boardStyles = `
     color: #1e293b;
     transition: opacity 0.3s ease;
     width: 100%;
-    padding-bottom: 8px; /* Extra space at bottom for visual balance */
+    padding-bottom: 8px;
     line-height: 1.3; 
   }
-  /* When revealed, we do NOT hide text, we just overlay the answer */
   
-/* Updated Answer Overlay */
+  /* Answer Overlay - ABSOLUTE POSITIONING with TRANSPARENCY */
   .answer-section { 
     position: absolute;
     bottom: 0;
     left: 0; 
     right: 0;
     
-    /* CHANGE 1: 50% Transparency */
-    background: rgba(255, 255, 255, 0.5); 
+    /* 50% opacity white background */
+    background: rgba(255, 255, 255, 0.5);
     
-    /* OPTIONAL BUT RECOMMENDED: Blurs the text underneath so it looks cleaner */
-    backdrop-filter: blur(2px); 
-    -webkit-backdrop-filter: blur(2px); /* Safari support */
-
-    border-top: 1px solid rgba(226, 232, 240, 0.6); /* Made border slightly transparent too */
+    /* Blur effect for readability */
+    backdrop-filter: blur(1.5px);
+    -webkit-backdrop-filter: blur(1.5px);
+    
+    border-top: 1px solid rgba(226, 232, 240, 0.6);
     padding: 12px;
     
     transform: translateY(110%);
@@ -542,7 +543,7 @@ const boardStyles = `
   }
   
   .answer-section.visible { 
-    transform: translateY(0); /* Slide up to sit on top of bottom content */
+    transform: translateY(0); 
   }
 
   .answer-text { 
@@ -566,8 +567,8 @@ const boardStyles = `
     align-items: center; 
     background: #fafafa; 
     flex-shrink: 0; 
-    min-height: 45px; /* Slight increase for tap targets */
-    z-index: 20; /* Ensure footer stays above the answer overlay if z-index fights happen */
+    min-height: 45px; 
+    z-index: 20; 
   }
   
   .perf-buttons { display: flex; gap: 4px; }
