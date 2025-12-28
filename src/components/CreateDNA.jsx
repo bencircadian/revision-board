@@ -4,6 +4,7 @@ import { Icon } from './Icons';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import { normalizeToLevel, DIFFICULTY_OPTIONS } from '../utils/difficulty';
+import ErrorMessage from './ErrorMessage';
 
 // SAFE MATH RENDERER
 const RenderTex = ({ text }) => {
@@ -39,32 +40,50 @@ export default function CreateDNA({ onGenerate, onCancel }) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [skillQuestions, setSkillQuestions] = useState({}); 
-  const [previews, setPreviews] = useState({}); 
+  const [previews, setPreviews] = useState({});
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchSkills() {
-      const { data } = await supabase.from('questions').select('*').order('skill_name');
-      if (data) {
-        const uniqueSkills = [...new Set(data.map(d => d.skill_name))].sort();
-        setAvailableSkills(uniqueSkills);
-        
-        const bySkill = {};
-        data.forEach(q => {
-          if (!bySkill[q.skill_name]) bySkill[q.skill_name] = [];
-          bySkill[q.skill_name].push(q);
-        });
-        setSkillQuestions(bySkill);
-        
-        if (uniqueSkills.length > 0) {
-          const firstSkill = uniqueSkills[0];
-          setSelections([{ id: 1, skill: firstSkill, difficulty: '••' }]);
-          generatePreview(1, firstSkill, '••', bySkill);
-        }
-      }
-      setLoading(false);
-    }
     fetchSkills();
   }, []);
+
+  async function fetchSkills() {
+    setLoading(true);
+    setError(null);
+    
+    const { data, error: fetchError } = await supabase.from('questions').select('*').order('skill_name');
+    
+    if (fetchError) {
+      setError('Could not load skills. Please check your connection.');
+      setLoading(false);
+      return;
+    }
+    
+    if (data) {
+      const uniqueSkills = [...new Set(data.map(d => d.skill_name))].sort();
+      setAvailableSkills(uniqueSkills);
+      
+      if (uniqueSkills.length === 0) {
+        setError('No skills found. Add some questions first.');
+        setLoading(false);
+        return;
+      }
+      
+      const bySkill = {};
+      data.forEach(q => {
+        if (!bySkill[q.skill_name]) bySkill[q.skill_name] = [];
+        bySkill[q.skill_name].push(q);
+      });
+      setSkillQuestions(bySkill);
+      
+      if (uniqueSkills.length > 0) {
+        const firstSkill = uniqueSkills[0];
+        setSelections([{ id: 1, skill: firstSkill, difficulty: '••' }]);
+        generatePreview(1, firstSkill, '••', bySkill);
+      }
+    }
+    setLoading(false);
+  }
 
   const generatePreview = (rowId, skill, difficulty, questionsCache = skillQuestions) => {
     const allQuestions = questionsCache[skill] || [];
@@ -146,7 +165,14 @@ export default function CreateDNA({ onGenerate, onCancel }) {
   };
 
   const handleGenerate = async () => {
+    if (selections.length === 0) {
+      setError('Please select at least one skill');
+      return;
+    }
+    
     setLoading(true);
+    setError(null);
+    
     let generatedCards = [];
     
     for (const selection of selections) {
@@ -195,7 +221,14 @@ export default function CreateDNA({ onGenerate, onCancel }) {
         }
       }
     }
+    
     setLoading(false);
+    
+    if (generatedCards.length === 0) {
+      setError('Could not generate any questions. Please try different skills.');
+      return;
+    }
+    
     onGenerate(generatedCards);
   };
 
@@ -238,6 +271,14 @@ export default function CreateDNA({ onGenerate, onCancel }) {
           </div>
           <button className="btn-back" onClick={onCancel}>← Back</button>
         </header>
+
+        {/* Error Message */}
+        {error && (
+          <ErrorMessage 
+            message={error} 
+            onRetry={error.includes('load') ? fetchSkills : () => setError(null)}
+          />
+        )}
 
         <div className="topic-search">
           <span className="search-icon"><Icon name="search" size={16} /></span>
@@ -301,16 +342,16 @@ export default function CreateDNA({ onGenerate, onCancel }) {
                       <span className="diff-label">DIFFICULTY</span>
                       <div className="diff-buttons">
                         {DIFFICULTY_OPTIONS.map(opt => (
-  <button
-    key={opt.level}
-    type="button"
-    className={`diff-btn ${normalizeToLevel(row.difficulty) === opt.level ? 'active' : ''}`}
-    onClick={() => updateRow(row.id, 'difficulty', opt.value)}
-    title={opt.label}
-  >
-    <Icon name={`level${opt.level}`} size={20} />
-  </button>
-))}
+                          <button
+                            key={opt.level}
+                            type="button"
+                            className={`diff-btn ${normalizeToLevel(row.difficulty) === opt.level ? 'active' : ''}`}
+                            onClick={() => updateRow(row.id, 'difficulty', opt.value)}
+                            title={opt.label}
+                          >
+                            <Icon name={`level${opt.level}`} size={20} />
+                          </button>
+                        ))}
                       </div>
                     </div>
 
