@@ -9,7 +9,8 @@ export default function Sidebar({
   onToggleCollapse,
   isMobile,
   mobileMenuOpen,
-  onCloseMobile
+  onCloseMobile,
+  onLogout // <--- Added this prop
 }) {
   const [user, setUser] = useState(null);
 
@@ -76,6 +77,14 @@ export default function Sidebar({
       </nav>
 
       <div className="sidebar-footer">
+        {/* NEW: Logout Button */}
+        <button className="logout-btn" onClick={onLogout} title="Sign Out">
+          <span className="nav-icon-container">
+            <Icon name="logout" size={20} />
+          </span>
+          {!collapsed && <span className="nav-label">Sign Out</span>}
+        </button>
+
         <div className="user-section">
           <div className="user-avatar">
             {user?.email?.charAt(0).toUpperCase() || 'T'}
@@ -111,7 +120,7 @@ export default function Sidebar({
 
         .sidebar-header {
           padding: 20px;
-          height: 80px; /* Locked height */
+          height: 80px;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -224,7 +233,36 @@ export default function Sidebar({
         .nav-label { font-weight: 600; font-size: 0.9rem; display: block; }
         .nav-desc { font-size: 0.7rem; color: rgba(255,255,255,0.3); display: block; }
 
-        .sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+        .sidebar-footer { 
+          padding: 16px; 
+          border-top: 1px solid rgba(255,255,255,0.05); 
+          display: flex; 
+          flex-direction: column; 
+          gap: 12px; 
+          overflow: hidden; 
+        }
+
+        /* LOGOUT BUTTON STYLES */
+        .logout-btn {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 10px 16px;
+          background: transparent;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 12px;
+          cursor: pointer;
+          color: rgba(255,255,255,0.6);
+          transition: all 0.2s;
+          white-space: nowrap;
+        }
+        
+        .logout-btn:hover {
+          background: rgba(239, 68, 68, 0.15);
+          border-color: rgba(239, 68, 68, 0.3);
+          color: #fca5a5;
+        }
+
         .user-section { display: flex; align-items: center; gap: 12px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 12px; white-space: nowrap; }
         .user-avatar { width: 32px; height: 32px; background: var(--accent); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
         .user-name { font-weight: 600; font-size: 0.8rem; color: white; display: block; }
